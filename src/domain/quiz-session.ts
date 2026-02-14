@@ -1,3 +1,4 @@
+import type { Attempt } from "./attempt";
 import type { FactFamily } from "./fact-family";
 import { factFamilyId } from "./fact-family";
 import { generateFactFamilies } from "./fact-family-generator";
@@ -69,6 +70,10 @@ export class QuizSession {
 			familyId,
 			format,
 		};
+	}
+
+	getAllAttempts(): Attempt[] {
+		return this.storage.getAllAttempts();
 	}
 
 	submitAnswer(familyId: string, format: QuizFormat, correct: boolean): void {

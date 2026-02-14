@@ -1,4 +1,34 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+
+async function solveQuizCorrectly(page: Page): Promise<void> {
+	const before = await page.locator("#quiz-before").textContent();
+	const after = await page.locator("#quiz-after").textContent();
+	const full = `${before ?? ""}?${after ?? ""}`;
+
+	let answer: number | null = null;
+
+	const mul = full.match(/(\d+)\s*×\s*(\d+)\s*=\s*\?/);
+	if (mul) answer = Number(mul[1]) * Number(mul[2]);
+
+	const mulMiss = full.match(/(\d+)\s*×\s*\?\s*=\s*(\d+)/);
+	if (!answer && mulMiss) answer = Number(mulMiss[2]) / Number(mulMiss[1]);
+
+	const div = full.match(/(\d+)\s*÷\s*(\d+)\s*=\s*\?/);
+	if (!answer && div) answer = Number(div[1]) / Number(div[2]);
+
+	const divMissDiv = full.match(/(\d+)\s*÷\s*\?\s*=\s*(\d+)/);
+	if (!answer && divMissDiv)
+		answer = Number(divMissDiv[1]) / Number(divMissDiv[2]);
+
+	const divMissDividend = full.match(/\?\s*÷\s*(\d+)\s*=\s*(\d+)/);
+	if (!answer && divMissDividend)
+		answer = Number(divMissDividend[1]) * Number(divMissDividend[2]);
+
+	expect(answer).not.toBeNull();
+	await page.locator("#quiz-answer").fill(String(answer));
+	await page.getByRole("button", { name: "Submit" }).click();
+	await expect(page.locator("#quiz-feedback")).toHaveText("Correct!");
+}
 
 test.describe("Math Facts Quiz", () => {
 	test("page loads with correct title", async ({ page }) => {
@@ -119,6 +149,57 @@ test.describe("Math Facts Quiz", () => {
 
 		const formatCheckboxes = page.locator("#format-checkboxes label");
 		await expect(formatCheckboxes).toHaveCount(5);
+	});
+
+	test("confetti fires on first-ever correct answer", async ({ page }) => {
+		await page.goto("/");
+
+		// Listen for confetti event
+		const confettiFired = page.evaluate(
+			() =>
+				new Promise<boolean>((resolve) => {
+					document.addEventListener("confetti-fired", () => resolve(true), {
+						once: true,
+					});
+					setTimeout(() => resolve(false), 3000);
+				}),
+		);
+
+		await solveQuizCorrectly(page);
+		expect(await confettiFired).toBe(true);
+	});
+
+	test("confetti fires on first correct answer after clearing history", async ({
+		page,
+	}) => {
+		await page.goto("/");
+
+		// Answer one correctly to build history
+		await solveQuizCorrectly(page);
+		await page.waitForTimeout(1000);
+
+		// Clear history
+		await page.locator("#hamburger-menu").click();
+		await page.getByRole("button", { name: "Clear History" }).click();
+
+		// Go back to quiz
+		await page.locator("#close-alt-views").click();
+		await page.waitForTimeout(500);
+
+		// Listen for confetti event BEFORE solving
+		const confettiFired = page.evaluate(
+			() =>
+				new Promise<boolean>((resolve) => {
+					document.addEventListener("confetti-fired", () => resolve(true), {
+						once: true,
+					});
+					setTimeout(() => resolve(false), 3000);
+				}),
+		);
+
+		// Solve the next quiz correctly
+		await solveQuizCorrectly(page);
+		expect(await confettiFired).toBe(true);
 	});
 
 	test("reset to defaults restores all tables and formats", async ({

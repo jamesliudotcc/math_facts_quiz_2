@@ -1,6 +1,6 @@
 // src/web/sw.ts
 var sw = self;
-var CACHE_NAME = "math-facts-v1";
+var CACHE_NAME = "math-facts-v2";
 var APP_SHELL = [
 	"/",
 	"/app.js",
