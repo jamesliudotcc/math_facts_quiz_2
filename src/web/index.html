@@ -11,10 +11,16 @@
 		.feedback.correct { background: var(--pico-ins-color); color: white; }
 		.feedback.incorrect { background: var(--pico-del-color); color: white; }
 		.quiz-prompt { font-size: 2rem; margin: 2rem 0; display: flex; align-items: baseline; justify-content: center; gap: 0.25rem; }
-		.quiz-inline-input { flex: 0 0 4ch; text-align: center; font-size: 2rem; margin: 0; padding: 0.1em 0.2em; border: 2px solid var(--pico-primary); border-radius: 0.25rem; }
+		.quiz-inline-input { flex: 0 0 5ch; text-align: center; font-size: 2rem; margin: 0; padding: 0.1em 0.2em; border: 2px solid var(--pico-primary); border-radius: 0.25rem; -moz-appearance: textfield; }
+		.quiz-inline-input::-webkit-outer-spin-button, .quiz-inline-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 		.table-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
 		section[hidden] { display: none; }
 		summary h2 { display: inline; }
+		.time-toggle { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
+		.time-toggle button { margin: 0; padding: 0.25rem 0.75rem; }
+		.mastery-grid { border-collapse: collapse; }
+		.mastery-grid th { padding: 0.15rem 0.3rem; font-size: 0.8rem; text-align: center; }
+		.mastery-grid td { padding: 0.15rem; text-align: center; color: #fff; font-size: 0.75rem; font-weight: 600; border-radius: 3px; width: 2rem; height: 2rem; }
 	</style>
 </head>
 <body>
