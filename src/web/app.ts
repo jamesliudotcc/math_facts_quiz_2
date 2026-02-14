@@ -59,3 +59,8 @@ backBtn.addEventListener("click", () => {
 
 // Initial state
 showQuiz();
+
+// Register service worker
+if ("serviceWorker" in navigator) {
+	navigator.serviceWorker.register("/sw.js");
+}

@@ -8,7 +8,7 @@ install: ## Install dependencies
 	bun install
 
 clean: ## Remove node_modules, dist, and build artifacts
-	rm -rf node_modules dist src/web/app.js
+	rm -rf node_modules dist src/web/app.js src/web/sw.js
 
 chingon: format lint typecheck test ## Format, lint, typecheck, and test — todo bien
 
@@ -25,9 +25,13 @@ typecheck: ## Type-check with TypeScript Go
 # Build
 build.web: ## Bundle the web app
 	bun build src/web/app.ts --outfile src/web/app.js --bundle
+	bun build src/web/sw.ts --outfile src/web/sw.js --bundle
 
 build.web.dist: ## Bundle to dist/ for deployment
-	bun build src/web/app.ts --outfile dist/app.js --bundle && cp src/web/index.html dist/index.html
+	bun build src/web/app.ts --outfile dist/app.js --bundle
+	bun build src/web/sw.ts --outfile dist/sw.js --bundle
+	cp src/web/index.html src/web/manifest.webmanifest dist/
+	cp assets/icon-192.png assets/icon-512.png assets/favicon.png dist/
 
 serve.web: build.web ## Build and serve web app locally
 	bun serve-web.ts
