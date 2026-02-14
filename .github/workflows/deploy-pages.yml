@@ -29,6 +29,10 @@ jobs:
 
       - run: bun run build:web:dist
 
+      - run: bunx playwright install --with-deps chromium
+
+      - run: bun run test:web
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -40,6 +40,10 @@ yarn-error.*
 # web build output
 src/web/app.js
 
+# Playwright
+test-results/
+playwright-report/
+
 # generated native folders
 /ios
 /android
