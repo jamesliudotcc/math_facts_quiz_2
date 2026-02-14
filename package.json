@@ -12,6 +12,7 @@
 		"test": "bun test",
 		"typecheck": "tsgo --noEmit",
 		"build:web": "bun build src/web/app.ts --outfile src/web/app.js --bundle",
+		"build:web:dist": "bun build src/web/app.ts --outfile dist/app.js --bundle && cp src/web/index.html dist/index.html",
 		"serve:web": "bun run build:web && bun serve-web.ts"
 	},
 	"dependencies": {
