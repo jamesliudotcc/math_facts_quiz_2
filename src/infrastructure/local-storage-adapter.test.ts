@@ -30,11 +30,11 @@ afterEach(() => {
 describe("LocalStorageAdapter", () => {
 	test("persists and loads review records across instances", () => {
 		const adapter1 = new LocalStorageAdapter();
-		const record = createNewReviewRecord("3x5:a*b");
+		const record = createNewReviewRecord("3x5:mul");
 		adapter1.saveReviewRecord(record);
 
 		const adapter2 = new LocalStorageAdapter();
-		expect(adapter2.getReviewRecord("3x5:a*b")).toEqual(record);
+		expect(adapter2.getReviewRecord("3x5:mul")).toEqual(record);
 	});
 
 	test("returns default config when none saved", () => {

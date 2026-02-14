@@ -1,6 +1,6 @@
 import type { FactFamily } from "./fact-family";
 import { factFamilyId } from "./fact-family";
-import { QuizFormat } from "./quiz-format";
+import { ALL_QUIZ_FORMATS, QuizFormat } from "./quiz-format";
 
 export type QuizItem = {
 	readonly family: FactFamily;
@@ -16,27 +16,50 @@ export type RenderedQuizItem = {
 	readonly answer: number;
 };
 
+function pickFactor(family: FactFamily): "factor1" | "factor2" {
+	if (family.factor1 === family.factor2) return "factor1";
+	return Math.random() < 0.5 ? "factor1" : "factor2";
+}
+
 export function renderQuizItem(item: QuizItem): RenderedQuizItem {
-	const { factor1: a, factor2: b, product: p } = item.family;
+	const { factor1, factor2, product } = item.family;
 	switch (item.format) {
-		case QuizFormat.A_TIMES_B:
-			return { prompt: `${a} × ${b} = ?`, answer: p };
-		case QuizFormat.B_TIMES_A:
-			return { prompt: `${b} × ${a} = ?`, answer: p };
-		case QuizFormat.A_TIMES_WHAT:
-			return { prompt: `${a} × ? = ${p}`, answer: b };
-		case QuizFormat.WHAT_TIMES_B:
-			return { prompt: `? × ${b} = ${p}`, answer: a };
-		case QuizFormat.P_DIV_A:
-			return { prompt: `${p} ÷ ${a} = ?`, answer: b };
-		case QuizFormat.P_DIV_B:
-			return { prompt: `${p} ÷ ${b} = ?`, answer: a };
+		case QuizFormat.MUL:
+			return { prompt: `${factor1} × ${factor2} = ?`, answer: product };
+		case QuizFormat.MUL_MISS: {
+			const shown = pickFactor(item.family);
+			const hidden = shown === "factor1" ? "factor2" : "factor1";
+			const a = item.family[shown];
+			const b = item.family[hidden];
+			return { prompt: `${a} × ? = ${product}`, answer: b };
+		}
+		case QuizFormat.DIV: {
+			const divisor = pickFactor(item.family);
+			const quotient = divisor === "factor1" ? "factor2" : "factor1";
+			return {
+				prompt: `${product} ÷ ${item.family[divisor]} = ?`,
+				answer: item.family[quotient],
+			};
+		}
+		case QuizFormat.DIV_MISS_DIVISOR: {
+			const quotient = pickFactor(item.family);
+			const divisor = quotient === "factor1" ? "factor2" : "factor1";
+			return {
+				prompt: `${product} ÷ ? = ${item.family[quotient]}`,
+				answer: item.family[divisor],
+			};
+		}
+		case QuizFormat.DIV_MISS_DIVIDEND: {
+			const divisor = pickFactor(item.family);
+			const quotient = divisor === "factor1" ? "factor2" : "factor1";
+			return {
+				prompt: `? ÷ ${item.family[divisor]} = ${item.family[quotient]}`,
+				answer: product,
+			};
+		}
 	}
 }
 
-export function applicableFormats(family: FactFamily): readonly QuizFormat[] {
-	if (family.factor1 === family.factor2) {
-		return [QuizFormat.A_TIMES_B, QuizFormat.A_TIMES_WHAT, QuizFormat.P_DIV_A];
-	}
-	return Object.values(QuizFormat);
+export function applicableFormats(_family: FactFamily): readonly QuizFormat[] {
+	return ALL_QUIZ_FORMATS;
 }

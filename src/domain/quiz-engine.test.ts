@@ -58,25 +58,25 @@ describe("selectNextItem", () => {
 
 	test("returns new item when none have been tried", () => {
 		const records = new Map<string, ReviewRecord>();
-		const result = selectNextItem(["3x5:a*b", "3x5:b*a"], records, nowMs);
-		expect(result).toBe("3x5:a*b");
+		const result = selectNextItem(["3x5:mul", "3x5:mul_miss"], records, nowMs);
+		expect(result).toBe("3x5:mul");
 	});
 
 	test("returns most overdue tried item", () => {
 		const records = new Map<string, ReviewRecord>([
 			[
-				"3x5:a*b",
+				"3x5:mul",
 				{
-					itemId: "3x5:a*b",
+					itemId: "3x5:mul",
 					lastTriedTime: nowMs - 20_000,
 					lastSuccessTime: nowMs - 20_000,
 					consecutiveSuccesses: 1,
 				},
 			],
 			[
-				"3x5:b*a",
+				"3x5:mul_miss",
 				{
-					itemId: "3x5:b*a",
+					itemId: "3x5:mul_miss",
 					lastTriedTime: nowMs - 60_000,
 					lastSuccessTime: nowMs - 60_000,
 					consecutiveSuccesses: 1,
@@ -84,8 +84,8 @@ describe("selectNextItem", () => {
 			],
 		]);
 
-		const result = selectNextItem(["3x5:a*b", "3x5:b*a"], records, nowMs);
-		expect(result).toBe("3x5:b*a");
+		const result = selectNextItem(["3x5:mul", "3x5:mul_miss"], records, nowMs);
+		expect(result).toBe("3x5:mul_miss");
 	});
 
 	test("returns null for empty item list", () => {
@@ -96,9 +96,9 @@ describe("selectNextItem", () => {
 	test("returns tried item even when recently tried (never null with tried items)", () => {
 		const records = new Map<string, ReviewRecord>([
 			[
-				"3x5:a*b",
+				"3x5:mul",
 				{
-					itemId: "3x5:a*b",
+					itemId: "3x5:mul",
 					lastTriedTime: nowMs - 1_000,
 					lastSuccessTime: nowMs - 1_000,
 					consecutiveSuccesses: 5,
@@ -106,8 +106,8 @@ describe("selectNextItem", () => {
 			],
 		]);
 
-		const result = selectNextItem(["3x5:a*b"], records, nowMs);
-		expect(result).toBe("3x5:a*b");
+		const result = selectNextItem(["3x5:mul"], records, nowMs);
+		expect(result).toBe("3x5:mul");
 	});
 
 	test("failed items score higher than well-known items", () => {

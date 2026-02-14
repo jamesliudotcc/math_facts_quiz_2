@@ -87,4 +87,49 @@ test.describe("Math Facts Quiz", () => {
 		await expect(page.locator("#quiz-view")).toBeVisible();
 		await expect(page.locator("#alt-views")).toBeHidden();
 	});
+
+	test("quiz shows 5 format checkboxes in settings", async ({ page }) => {
+		await page.goto("/");
+		await page.locator("#hamburger-menu").click();
+
+		const formatCheckboxes = page.locator("#format-checkboxes label");
+		await expect(formatCheckboxes).toHaveCount(5);
+	});
+
+	test("reset to defaults restores all tables and formats", async ({
+		page,
+	}) => {
+		await page.goto("/");
+		await page.locator("#hamburger-menu").click();
+
+		// Uncheck some tables
+		const tableCheckboxes = page.locator("#table-checkboxes input");
+		await tableCheckboxes.nth(0).uncheck(); // table 1
+		await tableCheckboxes.nth(1).uncheck(); // table 2
+		await tableCheckboxes.nth(2).uncheck(); // table 3
+
+		// Uncheck some formats
+		const formatCheckboxes = page.locator("#format-checkboxes input");
+		await formatCheckboxes.nth(0).uncheck();
+		await formatCheckboxes.nth(1).uncheck();
+
+		// Verify they are unchecked
+		await expect(tableCheckboxes.nth(0)).not.toBeChecked();
+		await expect(formatCheckboxes.nth(0)).not.toBeChecked();
+
+		// Click reset
+		await page.locator("#reset-settings").click();
+
+		// All 9 table checkboxes should be checked (tables 2-10)
+		for (let i = 1; i < 10; i++) {
+			await expect(tableCheckboxes.nth(i)).toBeChecked();
+		}
+		// Table 1 should not be checked (not in defaults)
+		await expect(tableCheckboxes.nth(0)).not.toBeChecked();
+
+		// All 5 format checkboxes should be checked
+		for (let i = 0; i < 5; i++) {
+			await expect(formatCheckboxes.nth(i)).toBeChecked();
+		}
+	});
 });

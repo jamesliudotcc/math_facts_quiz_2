@@ -1,5 +1,5 @@
 import type { StoragePort } from "../domain/ports";
-import type { QuizFormat } from "../domain/quiz-format";
+import { ALL_QUIZ_FORMATS, type QuizFormat } from "../domain/quiz-format";
 import type { ReviewRecord } from "../domain/review-record";
 import type { UserConfig } from "../domain/user-config";
 import { DEFAULT_USER_CONFIG } from "../domain/user-config";
@@ -58,9 +58,16 @@ export class LocalStorageAdapter implements StoragePort {
 		const raw = localStorage.getItem(KEYS.USER_CONFIG);
 		if (!raw) return DEFAULT_USER_CONFIG;
 		const parsed = JSON.parse(raw);
+		const validFormats = new Set<string>(ALL_QUIZ_FORMATS);
+		const loaded = (parsed.enabledFormats as string[]).filter((f) =>
+			validFormats.has(f),
+		);
 		return {
 			selectedTables: new Set<number>(parsed.selectedTables),
-			enabledFormats: new Set<QuizFormat>(parsed.enabledFormats),
+			enabledFormats:
+				loaded.length > 0
+					? new Set<QuizFormat>(loaded as QuizFormat[])
+					: DEFAULT_USER_CONFIG.enabledFormats,
 		};
 	}
 

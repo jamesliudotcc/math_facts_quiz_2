@@ -6,9 +6,9 @@ import { InMemoryStorage } from "./in-memory-storage";
 describe("InMemoryStorage", () => {
 	test("stores and retrieves review records", () => {
 		const storage = new InMemoryStorage();
-		const record = createNewReviewRecord("3x5:a*b");
+		const record = createNewReviewRecord("3x5:mul");
 		storage.saveReviewRecord(record);
-		expect(storage.getReviewRecord("3x5:a*b")).toEqual(record);
+		expect(storage.getReviewRecord("3x5:mul")).toEqual(record);
 	});
 
 	test("returns undefined for missing record", () => {

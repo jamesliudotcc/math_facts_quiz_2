@@ -1,13 +1,13 @@
 import type { StoragePort } from "../domain/ports";
 import { ALL_QUIZ_FORMATS, type QuizFormat } from "../domain/quiz-format";
+import { DEFAULT_USER_CONFIG } from "../domain/user-config";
 
 const FORMAT_LABELS: Record<string, string> = {
-	"a*b": "a × b = ?",
-	"b*a": "b × a = ?",
-	"a*?=p": "a × ? = p",
-	"?*b=p": "? × b = p",
-	"p/a": "p ÷ a = ?",
-	"p/b": "p ÷ b = ?",
+	mul: "a × b = ?",
+	mul_miss: "a × ? = p",
+	div: "p ÷ a = ?",
+	div_miss_divisor: "p ÷ ? = a",
+	div_miss_dividend: "? ÷ a = b",
 };
 
 export class ConfigView {
@@ -26,6 +26,16 @@ export class ConfigView {
 		) as HTMLElement;
 
 		this.render();
+
+		document
+			.getElementById("reset-settings")
+			?.addEventListener("click", () => this.resetToDefaults());
+	}
+
+	private resetToDefaults(): void {
+		this.storage.saveUserConfig(DEFAULT_USER_CONFIG);
+		this.render();
+		this.onConfigChange();
 	}
 
 	render(): void {

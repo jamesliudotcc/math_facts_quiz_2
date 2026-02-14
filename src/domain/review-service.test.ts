@@ -6,7 +6,7 @@ describe("processReview", () => {
 	const nowMs = 1_000_000;
 
 	test("correct answer sets lastTriedTime and lastSuccessTime", () => {
-		const record = createNewReviewRecord("3x5:a*b");
+		const record = createNewReviewRecord("3x5:mul");
 		const updated = processReview(record, true, nowMs);
 		expect(updated.lastTriedTime).toBe(nowMs);
 		expect(updated.lastSuccessTime).toBe(nowMs);
@@ -14,7 +14,7 @@ describe("processReview", () => {
 	});
 
 	test("incorrect answer sets lastTriedTime but not lastSuccessTime", () => {
-		const record = createNewReviewRecord("3x5:a*b");
+		const record = createNewReviewRecord("3x5:mul");
 		const updated = processReview(record, false, nowMs);
 		expect(updated.lastTriedTime).toBe(nowMs);
 		expect(updated.lastSuccessTime).toBe(0);
@@ -23,7 +23,7 @@ describe("processReview", () => {
 
 	test("incorrect answer resets consecutiveSuccesses", () => {
 		const record = {
-			itemId: "3x5:a*b",
+			itemId: "3x5:mul",
 			lastTriedTime: 500_000,
 			lastSuccessTime: 500_000,
 			consecutiveSuccesses: 5,
@@ -35,7 +35,7 @@ describe("processReview", () => {
 
 	test("correct answer increments consecutiveSuccesses", () => {
 		const record = {
-			itemId: "3x5:a*b",
+			itemId: "3x5:mul",
 			lastTriedTime: 500_000,
 			lastSuccessTime: 500_000,
 			consecutiveSuccesses: 3,
@@ -46,8 +46,8 @@ describe("processReview", () => {
 	});
 
 	test("preserves item id", () => {
-		const record = createNewReviewRecord("2x7:p/a");
+		const record = createNewReviewRecord("2x7:div");
 		const updated = processReview(record, true, nowMs);
-		expect(updated.itemId).toBe("2x7:p/a");
+		expect(updated.itemId).toBe("2x7:div");
 	});
 });
