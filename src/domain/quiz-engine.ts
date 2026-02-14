@@ -1,55 +1,50 @@
 import type { ReviewRecord } from "./review-record";
 import type { UserConfig } from "./user-config";
 
+const BASE_INTERVAL_MS = 30_000; // 30 seconds
+const MULTIPLIER = 3;
+const FAILED_INTERVAL_MS = 10_000; // 10 seconds
+
+export function desiredInterval(consecutiveSuccesses: number): number {
+	if (consecutiveSuccesses === 0) return FAILED_INTERVAL_MS;
+	return BASE_INTERVAL_MS * MULTIPLIER ** (consecutiveSuccesses - 1);
+}
+
+export function itemScore(record: ReviewRecord, nowMs: number): number {
+	if (record.lastTriedTime === 0) return Number.POSITIVE_INFINITY;
+	const elapsed = nowMs - record.lastTriedTime;
+	return elapsed / desiredInterval(record.consecutiveSuccesses);
+}
+
 export function selectNextItem(
 	allItemIds: readonly string[],
 	records: ReadonlyMap<string, ReviewRecord>,
-	now: Date,
+	nowMs: number,
 	newItemsIntroducedToday: number,
 	config: UserConfig,
 ): string | null {
-	const todayStr = now.toISOString().slice(0, 10);
+	if (allItemIds.length === 0) return null;
 
-	// Priority 1: overdue items (have a record, nextReviewDate <= today)
-	const overdueItems: string[] = [];
+	let bestId: string | null = null;
+	let bestScore = -Infinity;
+
 	for (const id of allItemIds) {
 		const record = records.get(id);
-		if (record && record.repetitions > 0 && record.nextReviewDate <= todayStr) {
-			overdueItems.push(id);
-		}
-	}
 
-	if (overdueItems.length > 0) {
-		// Return the most overdue item (earliest nextReviewDate)
-		overdueItems.sort((a, b) => {
-			const ra = records.get(a);
-			const rb = records.get(b);
-			if (!ra || !rb) return 0;
-			return ra.nextReviewDate.localeCompare(rb.nextReviewDate);
-		});
-		return overdueItems[0];
-	}
-
-	// Priority 2: new items (no record yet), capped by newItemsPerSession
-	if (newItemsIntroducedToday < config.newItemsPerSession) {
-		for (const id of allItemIds) {
-			if (!records.has(id)) {
-				return id;
+		if (!record || record.lastTriedTime === 0) {
+			// Never-tried item
+			if (newItemsIntroducedToday < config.newItemsPerSession) {
+				return id; // Immediately return first new item
 			}
+			continue; // Skip new items once cap is hit
+		}
+
+		const score = itemScore(record, nowMs);
+		if (score > bestScore) {
+			bestScore = score;
+			bestId = id;
 		}
 	}
 
-	// Priority 3: items reviewed today that failed (repetitions === 0, meaning reset)
-	for (const id of allItemIds) {
-		const record = records.get(id);
-		if (
-			record &&
-			record.repetitions === 0 &&
-			record.nextReviewDate <= todayStr
-		) {
-			return id;
-		}
-	}
-
-	return null;
+	return bestId;
 }

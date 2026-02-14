@@ -3,43 +3,51 @@ import { createNewReviewRecord } from "./review-record";
 import { processReview } from "./review-service";
 
 describe("processReview", () => {
-	const now = new Date("2025-06-15");
+	const nowMs = 1_000_000;
 
-	test("correct answer on new record sets next review to tomorrow", () => {
+	test("correct answer sets lastTriedTime and lastSuccessTime", () => {
 		const record = createNewReviewRecord("3x5:a*b");
-		const updated = processReview(record, 4, now);
-		expect(updated.nextReviewDate).toBe("2025-06-16");
-		expect(updated.repetitions).toBe(1);
-		expect(updated.interval).toBe(1);
+		const updated = processReview(record, true, nowMs);
+		expect(updated.lastTriedTime).toBe(nowMs);
+		expect(updated.lastSuccessTime).toBe(nowMs);
+		expect(updated.consecutiveSuccesses).toBe(1);
 	});
 
-	test("second correct answer sets next review 6 days out", () => {
-		const record = {
-			...createNewReviewRecord("3x5:a*b"),
-			repetitions: 1,
-			interval: 1,
-		};
-		const updated = processReview(record, 4, now);
-		expect(updated.nextReviewDate).toBe("2025-06-21");
-		expect(updated.interval).toBe(6);
+	test("incorrect answer sets lastTriedTime but not lastSuccessTime", () => {
+		const record = createNewReviewRecord("3x5:a*b");
+		const updated = processReview(record, false, nowMs);
+		expect(updated.lastTriedTime).toBe(nowMs);
+		expect(updated.lastSuccessTime).toBe(0);
+		expect(updated.consecutiveSuccesses).toBe(0);
 	});
 
-	test("incorrect answer resets and sets next review to tomorrow", () => {
+	test("incorrect answer resets consecutiveSuccesses", () => {
 		const record = {
-			...createNewReviewRecord("3x5:a*b"),
-			repetitions: 5,
-			interval: 30,
-			easeFactor: 2.5,
+			itemId: "3x5:a*b",
+			lastTriedTime: 500_000,
+			lastSuccessTime: 500_000,
+			consecutiveSuccesses: 5,
 		};
-		const updated = processReview(record, 1, now);
-		expect(updated.nextReviewDate).toBe("2025-06-16");
-		expect(updated.repetitions).toBe(0);
-		expect(updated.interval).toBe(1);
+		const updated = processReview(record, false, nowMs);
+		expect(updated.consecutiveSuccesses).toBe(0);
+		expect(updated.lastSuccessTime).toBe(500_000); // preserved
+	});
+
+	test("correct answer increments consecutiveSuccesses", () => {
+		const record = {
+			itemId: "3x5:a*b",
+			lastTriedTime: 500_000,
+			lastSuccessTime: 500_000,
+			consecutiveSuccesses: 3,
+		};
+		const updated = processReview(record, true, nowMs);
+		expect(updated.consecutiveSuccesses).toBe(4);
+		expect(updated.lastSuccessTime).toBe(nowMs);
 	});
 
 	test("preserves item id", () => {
 		const record = createNewReviewRecord("2x7:p/a");
-		const updated = processReview(record, 4, now);
+		const updated = processReview(record, true, nowMs);
 		expect(updated.itemId).toBe("2x7:p/a");
 	});
 });

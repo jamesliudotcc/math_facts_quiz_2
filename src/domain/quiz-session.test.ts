@@ -5,7 +5,6 @@ import { QuizSession } from "./quiz-session";
 describe("QuizSession", () => {
 	test("initialize and get first item", () => {
 		const storage = new InMemoryStorage();
-		// Default config has tables 2-10 selected
 		const session = new QuizSession(storage);
 		session.initialize();
 
@@ -26,10 +25,10 @@ describe("QuizSession", () => {
 
 		const record = storage.getReviewRecord(result?.itemId ?? "");
 		expect(record).toBeDefined();
-		expect(record?.repetitions).toBe(1);
+		expect(record?.consecutiveSuccesses).toBe(1);
 	});
 
-	test("submit incorrect answer resets repetitions", () => {
+	test("submit incorrect answer resets consecutiveSuccesses", () => {
 		const storage = new InMemoryStorage();
 		const session = new QuizSession(storage);
 		session.initialize();
@@ -40,7 +39,7 @@ describe("QuizSession", () => {
 
 		const record = storage.getReviewRecord(result?.itemId ?? "");
 		expect(record).toBeDefined();
-		expect(record?.repetitions).toBe(0);
+		expect(record?.consecutiveSuccesses).toBe(0);
 	});
 
 	test("new item introduction is tracked", () => {
@@ -58,26 +57,24 @@ describe("QuizSession", () => {
 		expect(storage.getNewItemsIntroducedToday(dateKey)).toBe(1);
 	});
 
-	test("single table config limits items", () => {
+	test("always returns an item when tried items exist", () => {
 		const storage = new InMemoryStorage();
 		storage.saveUserConfig({
 			...storage.getUserConfig(),
 			selectedTables: new Set([2]),
-			newItemsPerSession: 100, // uncap for this test
+			newItemsPerSession: 1,
 		});
 
 		const session = new QuizSession(storage);
 		session.initialize();
 
-		// Table 2: 10 families. 1 square (2x2) with 3 formats, 9 non-square with 6 formats = 57
-		const seenIds = new Set<string>();
-		let item = session.getNextItem();
-		while (item) {
-			expect(seenIds.has(item.itemId)).toBe(false);
-			seenIds.add(item.itemId);
-			session.submitAnswer(item.itemId, true);
-			item = session.getNextItem();
-		}
-		expect(seenIds.size).toBe(57);
+		// Answer first item to create a tried item
+		const first = session.getNextItem();
+		expect(first).not.toBeNull();
+		session.submitAnswer(first?.itemId ?? "", true);
+
+		// Should still get items (never null when tried items exist)
+		const next = session.getNextItem();
+		expect(next).not.toBeNull();
 	});
 });

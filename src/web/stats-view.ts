@@ -9,22 +9,18 @@ export class StatsView {
 
 	render(): void {
 		const records = this.storage.getAllReviewRecords();
-		const today = new Date().toISOString().slice(0, 10);
 
-		let dueToday = 0;
+		let struggling = 0;
 		let learning = 0;
 		let mature = 0;
 
 		for (const r of records) {
-			if (r.repetitions === 0) {
-				learning++;
-			} else if (r.interval >= 21) {
+			if (r.consecutiveSuccesses === 0) {
+				struggling++;
+			} else if (r.consecutiveSuccesses >= 5) {
 				mature++;
 			} else {
 				learning++;
-			}
-			if (r.nextReviewDate <= today) {
-				dueToday++;
 			}
 		}
 
@@ -32,13 +28,13 @@ export class StatsView {
 
 		this.container.innerHTML = `
 			<article>
-				<h3>Due Today</h3>
-				<p style="font-size:2rem; text-align:center;">${dueToday}</p>
+				<h3>Items Seen</h3>
+				<p style="font-size:2rem; text-align:center;">${totalReviewed}</p>
 			</article>
 			<div class="grid">
 				<article>
-					<h4>Total Reviewed</h4>
-					<p style="font-size:1.5rem; text-align:center;">${totalReviewed}</p>
+					<h4>Struggling</h4>
+					<p style="font-size:1.5rem; text-align:center;">${struggling}</p>
 				</article>
 				<article>
 					<h4>Learning</h4>

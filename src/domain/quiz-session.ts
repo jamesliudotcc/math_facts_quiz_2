@@ -40,8 +40,8 @@ export class QuizSession {
 
 	getNextItem(): QuizResult | null {
 		const config = this.storage.getUserConfig();
-		const now = new Date();
-		const dateKey = now.toISOString().slice(0, 10);
+		const nowMs = Date.now();
+		const dateKey = new Date(nowMs).toISOString().slice(0, 10);
 		const newToday = this.storage.getNewItemsIntroducedToday(dateKey);
 
 		const records = new Map<string, ReviewRecord>();
@@ -55,7 +55,7 @@ export class QuizSession {
 		const nextId = selectNextItem(
 			this.allItemIds,
 			records,
-			now,
+			nowMs,
 			newToday,
 			config,
 		);
@@ -71,9 +71,8 @@ export class QuizSession {
 	}
 
 	submitAnswer(itemId: string, correct: boolean): void {
-		const quality = correct ? 4 : 1;
-		const now = new Date();
-		const dateKey = now.toISOString().slice(0, 10);
+		const nowMs = Date.now();
+		const dateKey = new Date(nowMs).toISOString().slice(0, 10);
 
 		let record = this.storage.getReviewRecord(itemId);
 		const isNew = !record;
@@ -82,7 +81,7 @@ export class QuizSession {
 			record = createNewReviewRecord(itemId);
 		}
 
-		const updated = processReview(record, quality, now);
+		const updated = processReview(record, correct, nowMs);
 		this.storage.saveReviewRecord(updated);
 
 		if (isNew) {
