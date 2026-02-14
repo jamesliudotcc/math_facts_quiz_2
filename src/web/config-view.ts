@@ -1,0 +1,96 @@
+import type { StoragePort } from "../domain/ports";
+import { ALL_QUIZ_FORMATS, type QuizFormat } from "../domain/quiz-format";
+
+const FORMAT_LABELS: Record<string, string> = {
+	"a*b": "a × b = ?",
+	"b*a": "b × a = ?",
+	"a*?=p": "a × ? = p",
+	"?*b=p": "? × b = p",
+	"p/a": "p ÷ a = ?",
+	"p/b": "p ÷ b = ?",
+};
+
+export class ConfigView {
+	private tableContainer: HTMLElement;
+	private formatContainer: HTMLElement;
+	private newItemsInput: HTMLInputElement;
+
+	constructor(
+		private storage: StoragePort,
+		private onConfigChange: () => void,
+	) {
+		this.tableContainer = document.getElementById(
+			"table-checkboxes",
+		) as HTMLElement;
+		this.formatContainer = document.getElementById(
+			"format-checkboxes",
+		) as HTMLElement;
+		this.newItemsInput = document.getElementById(
+			"new-items-input",
+		) as HTMLInputElement;
+
+		this.render();
+		this.newItemsInput.addEventListener("change", () => this.saveConfig());
+	}
+
+	render(): void {
+		const config = this.storage.getUserConfig();
+
+		// Table checkboxes
+		this.tableContainer.innerHTML = "";
+		for (let t = 1; t <= 10; t++) {
+			const label = document.createElement("label");
+			const cb = document.createElement("input");
+			cb.type = "checkbox";
+			cb.checked = config.selectedTables.has(t);
+			cb.addEventListener("change", () => this.saveConfig());
+			label.appendChild(cb);
+			label.appendChild(document.createTextNode(` ${t}`));
+			this.tableContainer.appendChild(label);
+		}
+
+		// Format checkboxes
+		this.formatContainer.innerHTML = "";
+		for (const fmt of ALL_QUIZ_FORMATS) {
+			const label = document.createElement("label");
+			const cb = document.createElement("input");
+			cb.type = "checkbox";
+			cb.dataset.format = fmt;
+			cb.checked = config.enabledFormats.has(fmt);
+			cb.addEventListener("change", () => this.saveConfig());
+			label.appendChild(cb);
+			label.appendChild(document.createTextNode(` ${FORMAT_LABELS[fmt]}`));
+			this.formatContainer.appendChild(label);
+		}
+
+		this.newItemsInput.value = String(config.newItemsPerSession);
+	}
+
+	private saveConfig(): void {
+		const selectedTables = new Set<number>();
+		const tableCbs = this.tableContainer.querySelectorAll("input");
+		tableCbs.forEach((cb, i) => {
+			if (cb.checked) selectedTables.add(i + 1);
+		});
+
+		const enabledFormats = new Set<QuizFormat>();
+		const formatCbs = this.formatContainer.querySelectorAll("input");
+		for (const cb of formatCbs) {
+			if ((cb as HTMLInputElement).checked) {
+				enabledFormats.add(
+					(cb as HTMLInputElement).dataset.format as QuizFormat,
+				);
+			}
+		}
+
+		const newItemsPerSession =
+			Number.parseInt(this.newItemsInput.value, 10) || 10;
+
+		this.storage.saveUserConfig({
+			selectedTables,
+			enabledFormats,
+			newItemsPerSession,
+		});
+		this.onConfigChange();
+	}
+}

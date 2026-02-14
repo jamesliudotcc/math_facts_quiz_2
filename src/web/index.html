@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Math Facts Quiz</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+	<style>
+		nav [aria-current="page"] { font-weight: bold; }
+		.feedback { padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; text-align: center; font-size: 1.25rem; }
+		.feedback.correct { background: var(--pico-ins-color); color: white; }
+		.feedback.incorrect { background: var(--pico-del-color); color: white; }
+		.quiz-prompt { font-size: 2rem; text-align: center; margin: 2rem 0; }
+		.quiz-input { max-width: 200px; margin: 0 auto; text-align: center; font-size: 1.5rem; }
+		.table-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+		.done-message { text-align: center; padding: 2rem; }
+		section[hidden] { display: none; }
+	</style>
+</head>
+<body>
+	<header class="container">
+		<nav>
+			<ul>
+				<li><strong>Math Facts Quiz</strong></li>
+			</ul>
+			<ul>
+				<li><a href="#quiz" data-view="quiz">Quiz</a></li>
+				<li><a href="#config" data-view="config">Settings</a></li>
+				<li><a href="#stats" data-view="stats">Stats</a></li>
+			</ul>
+		</nav>
+	</header>
+	<main class="container">
+		<section id="quiz-view">
+			<div id="quiz-prompt" class="quiz-prompt"></div>
+			<div class="quiz-input">
+				<input type="number" id="quiz-answer" inputmode="numeric" placeholder="?" autofocus>
+			</div>
+			<div style="text-align:center; margin-top:1rem;">
+				<button id="quiz-submit">Submit</button>
+			</div>
+			<div id="quiz-feedback" class="feedback" hidden></div>
+			<div id="quiz-done" class="done-message" hidden>
+				<h2>All done for today!</h2>
+				<p>Come back tomorrow for more practice.</p>
+			</div>
+		</section>
+		<section id="config-view" hidden>
+			<h2>Settings</h2>
+			<article>
+				<h3>Tables</h3>
+				<div id="table-checkboxes" class="table-grid"></div>
+			</article>
+			<article>
+				<h3>Question Formats</h3>
+				<div id="format-checkboxes"></div>
+			</article>
+			<article>
+				<h3>New Items Per Session</h3>
+				<input type="number" id="new-items-input" min="1" max="50" value="10">
+			</article>
+		</section>
+		<section id="stats-view" hidden>
+			<h2>Statistics</h2>
+			<div id="stats-content"></div>
+		</section>
+	</main>
+	<script type="module" src="app.js"></script>
+</body>
+</html>
