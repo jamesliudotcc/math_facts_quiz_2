@@ -16,36 +16,46 @@ const configView = new ConfigView(storage, () => {
 const statsView = new StatsView(storage);
 
 // View switching
-const views: Record<string, HTMLElement> = {
-	quiz: document.getElementById("quiz-view") as HTMLElement,
-	config: document.getElementById("config-view") as HTMLElement,
-	stats: document.getElementById("stats-view") as HTMLElement,
-};
+const quizViewEl = document.getElementById("quiz-view") as HTMLElement;
+const altViewsEl = document.getElementById("alt-views") as HTMLElement;
+const configDetails = document.getElementById(
+	"config-details",
+) as HTMLDetailsElement;
+const statsDetails = document.getElementById(
+	"stats-details",
+) as HTMLDetailsElement;
+const hamburgerBtn = document.getElementById("hamburger-menu") as HTMLElement;
+const backBtn = document.getElementById("close-alt-views") as HTMLElement;
 
-function showView(name: "quiz" | "config" | "stats") {
-	for (const [key, el] of Object.entries(views)) {
-		el.hidden = key !== name;
-	}
-	for (const link of document.querySelectorAll("[data-view]")) {
-		const el = link as HTMLElement;
-		if (el.dataset.view === name) {
-			el.setAttribute("aria-current", "page");
-		} else {
-			el.removeAttribute("aria-current");
-		}
-	}
-	if (name === "quiz") quizView.showNextItem();
-	if (name === "config") configView.render();
-	if (name === "stats") statsView.render();
+function showAltViews() {
+	quizViewEl.hidden = true;
+	altViewsEl.hidden = false;
+
+	// Reset details state: Settings open, Stats closed
+	configDetails.open = true;
+	statsDetails.open = false;
+
+	configView.render();
+	statsView.render();
 }
 
-// Nav click handlers
-for (const link of document.querySelectorAll("[data-view]")) {
-	link.addEventListener("click", (e) => {
-		e.preventDefault();
-		showView((link as HTMLElement).dataset.view as "quiz" | "config" | "stats");
-	});
+function showQuiz() {
+	altViewsEl.hidden = true;
+	quizViewEl.hidden = false;
+	quizView.showNextItem();
 }
 
-// Initial view
-showView("quiz");
+hamburgerBtn.addEventListener("click", () => {
+	if (altViewsEl.hidden) {
+		showAltViews();
+	} else {
+		showQuiz();
+	}
+});
+
+backBtn.addEventListener("click", () => {
+	showQuiz();
+});
+
+// Initial state
+showQuiz();

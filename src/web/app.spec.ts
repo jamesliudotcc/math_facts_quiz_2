@@ -6,11 +6,18 @@ test.describe("Math Facts Quiz", () => {
 		await expect(page).toHaveTitle("Math Facts Quiz");
 	});
 
-	test("navigation links are visible", async ({ page }) => {
+	test("hamburger menu launches alternate views", async ({ page }) => {
 		await page.goto("/");
-		await expect(page.getByRole("link", { name: "Quiz" })).toBeVisible();
-		await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
-		await expect(page.getByRole("link", { name: "Stats" })).toBeVisible();
+
+		const hamburger = page.locator("#hamburger-menu");
+		await expect(hamburger).toBeVisible();
+		await hamburger.click();
+
+		await expect(page.locator("#alt-views")).toBeVisible();
+		await expect(page.locator("#quiz-view")).toBeHidden();
+
+		await expect(page.locator("#config-details")).toBeVisible();
+		await expect(page.locator("#stats-details")).toBeVisible();
 	});
 
 	test("quiz prompt displays with input and submit button", async ({
@@ -32,38 +39,52 @@ test.describe("Math Facts Quiz", () => {
 		);
 	});
 
-	test("navigation switches to Settings view", async ({ page }) => {
+	test("Settings are open by default in alternate views", async ({ page }) => {
 		await page.goto("/");
-		await page.getByRole("link", { name: "Settings" }).click();
-		await expect(page.locator("#config-view")).toBeVisible();
-		await expect(page.locator("#quiz-view")).toBeHidden();
+		await page.locator("#hamburger-menu").click();
+
+		const settingsDetails = page.locator("#config-details");
+		await expect(settingsDetails).toHaveAttribute("open", "");
+
+		const tableCheckboxes = page.locator("#table-checkboxes input");
+		await expect(tableCheckboxes).toHaveCount(10);
 	});
 
-	test("navigation switches to Stats view", async ({ page }) => {
+	test("Stats are closed by default in alternate views", async ({ page }) => {
 		await page.goto("/");
-		await page.getByRole("link", { name: "Stats" }).click();
-		await expect(page.locator("#stats-view")).toBeVisible();
-		await expect(page.locator("#quiz-view")).toBeHidden();
+		await page.locator("#hamburger-menu").click();
+
+		const statsDetails = page.locator("#stats-details");
+		await expect(statsDetails).not.toHaveAttribute("open", "");
+
+		// Open it
+		await statsDetails.locator("summary").click();
+		await expect(statsDetails).toHaveAttribute("open", "");
 	});
 
-	test("Settings view shows table checkboxes, format checkboxes, and new items input", async ({
+	test("can navigate back to Quiz from alternate views", async ({ page }) => {
+		await page.goto("/");
+		await page.locator("#hamburger-menu").click();
+		await expect(page.locator("#alt-views")).toBeVisible();
+
+		await page.locator("#close-alt-views").click();
+		await expect(page.locator("#quiz-view")).toBeVisible();
+		await expect(page.locator("#alt-views")).toBeHidden();
+	});
+
+	test("clicking hamburger again while in alternate views toggles back to quiz", async ({
 		page,
 	}) => {
 		await page.goto("/");
-		await page.getByRole("link", { name: "Settings" }).click();
-		const tableCheckboxes = page.locator("#table-checkboxes input");
-		await expect(tableCheckboxes).toHaveCount(10);
-		const formatCheckboxes = page.locator("#format-checkboxes input");
-		expect(await formatCheckboxes.count()).toBeGreaterThan(0);
-		await expect(page.locator("#new-items-input")).toBeVisible();
-	});
+		const hamburger = page.locator("#hamburger-menu");
 
-	test("can navigate back to Quiz from Settings", async ({ page }) => {
-		await page.goto("/");
-		await page.getByRole("link", { name: "Settings" }).click();
-		await expect(page.locator("#config-view")).toBeVisible();
-		await page.getByRole("link", { name: "Quiz" }).click();
+		// Open alt views
+		await hamburger.click();
+		await expect(page.locator("#alt-views")).toBeVisible();
+
+		// Click again to close
+		await hamburger.click();
 		await expect(page.locator("#quiz-view")).toBeVisible();
-		await expect(page.locator("#config-view")).toBeHidden();
+		await expect(page.locator("#alt-views")).toBeHidden();
 	});
 });
