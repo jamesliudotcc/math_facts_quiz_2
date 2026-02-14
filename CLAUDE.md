@@ -39,3 +39,5 @@ Use the Makefile for running things to avoid missing steps.
 - Use Biome for formatting.
 - LaTeX for complex math rendering only.
 - For web, use semantic HTML and Pico CSS.
+- Use `make format` after even small code changes.
+- Use `make chingon` after big changes. If you are going to commit, the pre-commit checks always run `make chingon`
