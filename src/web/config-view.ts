@@ -30,11 +30,20 @@ export class ConfigView {
 		document
 			.getElementById("reset-settings")
 			?.addEventListener("click", () => this.resetToDefaults());
+
+		document
+			.getElementById("clear-history")
+			?.addEventListener("click", () => this.clearHistory());
 	}
 
 	private resetToDefaults(): void {
 		this.storage.saveUserConfig(DEFAULT_USER_CONFIG);
 		this.render();
+		this.onConfigChange();
+	}
+
+	private clearHistory(): void {
+		this.storage.clearAllAttempts();
 		this.onConfigChange();
 	}
 

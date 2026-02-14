@@ -1,10 +1,11 @@
-import type { ReviewRecord } from "./review-record";
+import type { Attempt } from "./attempt";
 import type { UserConfig } from "./user-config";
 
 export interface StoragePort {
-	getReviewRecord(itemId: string): ReviewRecord | undefined;
-	saveReviewRecord(record: ReviewRecord): void;
-	getAllReviewRecords(): ReviewRecord[];
+	getAttempts(familyId: string): Attempt[];
+	getAllAttempts(): Attempt[];
+	saveAttempt(attempt: Attempt): void;
+	clearAllAttempts(): void;
 
 	getUserConfig(): UserConfig;
 	saveUserConfig(config: UserConfig): void;

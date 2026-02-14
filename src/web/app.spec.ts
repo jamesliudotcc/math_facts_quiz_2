@@ -39,6 +39,31 @@ test.describe("Math Facts Quiz", () => {
 		);
 	});
 
+	test("clear history removes attempts from localStorage", async ({ page }) => {
+		await page.goto("/");
+
+		// Submit an answer to create an attempt
+		await page.locator("#quiz-answer").fill("5");
+		await page.getByRole("button", { name: "Submit" }).click();
+		await page.waitForTimeout(500);
+
+		// Verify attempts exist in localStorage
+		const beforeClear = await page.evaluate(() =>
+			localStorage.getItem("mathfacts:attempts"),
+		);
+		expect(JSON.parse(beforeClear ?? "[]").length).toBeGreaterThan(0);
+
+		// Open settings and click clear history
+		await page.locator("#hamburger-menu").click();
+		await page.getByRole("button", { name: "Clear History" }).click();
+
+		// Verify localStorage is cleared
+		const afterClear = await page.evaluate(() =>
+			localStorage.getItem("mathfacts:attempts"),
+		);
+		expect(JSON.parse(afterClear ?? "[]")).toEqual([]);
+	});
+
 	test("Settings are open by default in alternate views", async ({ page }) => {
 		await page.goto("/");
 		await page.locator("#hamburger-menu").click();

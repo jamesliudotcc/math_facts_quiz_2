@@ -1,6 +1,21 @@
 import { describe, expect, test } from "bun:test";
-import { desiredInterval, itemScore, selectNextItem } from "./quiz-engine";
-import type { ReviewRecord } from "./review-record";
+import type { Attempt } from "./attempt";
+import {
+	deriveFamilyStats,
+	desiredInterval,
+	familyScore,
+	selectBatch,
+} from "./quiz-engine";
+import { QuizFormat } from "./quiz-format";
+
+function attempt(
+	familyId: string,
+	format: QuizFormat,
+	correct: boolean,
+	timestamp: number,
+): Attempt {
+	return { familyId, format, timestamp, correct };
+}
 
 describe("desiredInterval", () => {
 	test("failed items have short interval", () => {
@@ -17,139 +32,112 @@ describe("desiredInterval", () => {
 	});
 });
 
-describe("itemScore", () => {
-	test("never-tried item has infinite score", () => {
-		const record: ReviewRecord = {
-			itemId: "a",
-			lastTriedTime: 0,
-			lastSuccessTime: 0,
-			consecutiveSuccesses: 0,
-		};
-		expect(itemScore(record, 1000)).toBe(Number.POSITIVE_INFINITY);
+describe("deriveFamilyStats", () => {
+	test("no attempts returns zero stats", () => {
+		const stats = deriveFamilyStats([]);
+		expect(stats.lastTriedTime).toBe(0);
+		expect(stats.effectiveSuccesses).toBe(0);
 	});
 
-	test("recently tried item has low score", () => {
+	test("single correct MUL attempt gives weight 1", () => {
+		const attempts = [attempt("3x5", QuizFormat.MUL, true, 5000)];
+		const stats = deriveFamilyStats(attempts);
+		expect(stats.lastTriedTime).toBe(5000);
+		expect(stats.effectiveSuccesses).toBe(1);
+	});
+
+	test("single correct DIV attempt gives weight 2", () => {
+		const attempts = [attempt("3x5", QuizFormat.DIV, true, 5000)];
+		const stats = deriveFamilyStats(attempts);
+		expect(stats.effectiveSuccesses).toBe(2);
+	});
+
+	test("weights sum for consecutive successes", () => {
+		const attempts = [
+			attempt("3x5", QuizFormat.MUL, false, 1000),
+			attempt("3x5", QuizFormat.MUL, true, 2000), // +1
+			attempt("3x5", QuizFormat.DIV, true, 3000), // +2
+			attempt("3x5", QuizFormat.DIV_MISS_DIVISOR, true, 4000), // +3
+		];
+		const stats = deriveFamilyStats(attempts);
+		expect(stats.effectiveSuccesses).toBe(6);
+		expect(stats.lastTriedTime).toBe(4000);
+	});
+
+	test("failure breaks consecutive streak", () => {
+		const attempts = [
+			attempt("3x5", QuizFormat.MUL, true, 1000),
+			attempt("3x5", QuizFormat.DIV, true, 2000),
+			attempt("3x5", QuizFormat.MUL, false, 3000),
+		];
+		const stats = deriveFamilyStats(attempts);
+		expect(stats.effectiveSuccesses).toBe(0);
+		expect(stats.lastTriedTime).toBe(3000);
+	});
+});
+
+describe("familyScore", () => {
+	test("never-tried family has infinite score", () => {
+		expect(familyScore([], 1000)).toBe(Number.POSITIVE_INFINITY);
+	});
+
+	test("recently tried family has low score", () => {
 		const nowMs = 100_000;
-		const record: ReviewRecord = {
-			itemId: "a",
-			lastTriedTime: nowMs - 5_000, // 5s ago, desired 30s
-			lastSuccessTime: nowMs - 5_000,
-			consecutiveSuccesses: 1,
-		};
-		const score = itemScore(record, nowMs);
+		const attempts = [attempt("a", QuizFormat.MUL, true, nowMs - 5_000)];
+		const score = familyScore(attempts, nowMs);
 		expect(score).toBeCloseTo(5_000 / 30_000, 5);
 	});
 
-	test("overdue item has score > 1", () => {
+	test("overdue family has score > 1", () => {
 		const nowMs = 100_000;
-		const record: ReviewRecord = {
-			itemId: "a",
-			lastTriedTime: nowMs - 60_000, // 60s ago, desired 30s
-			lastSuccessTime: nowMs - 60_000,
-			consecutiveSuccesses: 1,
-		};
-		const score = itemScore(record, nowMs);
+		const attempts = [attempt("a", QuizFormat.MUL, true, nowMs - 60_000)];
+		const score = familyScore(attempts, nowMs);
 		expect(score).toBe(2);
 	});
 });
 
-describe("selectNextItem", () => {
+describe("selectBatch", () => {
 	const nowMs = 1_000_000;
 
-	test("returns new item when none have been tried", () => {
-		const records = new Map<string, ReviewRecord>();
-		const result = selectNextItem(["3x5:mul", "3x5:mul_miss"], records, nowMs);
-		expect(result).toBe("3x5:mul");
+	test("returns new families when none have been tried", () => {
+		const result = selectBatch(["a", "b", "c"], [], 2, nowMs);
+		expect(result).toHaveLength(2);
+		expect(result).toContain("a");
+		expect(result).toContain("b");
 	});
 
-	test("returns most overdue tried item", () => {
-		const records = new Map<string, ReviewRecord>([
-			[
-				"3x5:mul",
-				{
-					itemId: "3x5:mul",
-					lastTriedTime: nowMs - 20_000,
-					lastSuccessTime: nowMs - 20_000,
-					consecutiveSuccesses: 1,
-				},
-			],
-			[
-				"3x5:mul_miss",
-				{
-					itemId: "3x5:mul_miss",
-					lastTriedTime: nowMs - 60_000,
-					lastSuccessTime: nowMs - 60_000,
-					consecutiveSuccesses: 1,
-				},
-			],
-		]);
-
-		const result = selectNextItem(["3x5:mul", "3x5:mul_miss"], records, nowMs);
-		expect(result).toBe("3x5:mul_miss");
+	test("returns most overdue families first", () => {
+		const attempts = [
+			attempt("a", QuizFormat.MUL, true, nowMs - 20_000),
+			attempt("b", QuizFormat.MUL, true, nowMs - 60_000),
+		];
+		const result = selectBatch(["a", "b"], attempts, 1, nowMs);
+		expect(result).toEqual(["b"]);
 	});
 
-	test("returns null for empty item list", () => {
-		const result = selectNextItem([], new Map(), nowMs);
-		expect(result).toBe(null);
+	test("returns empty for empty family list", () => {
+		expect(selectBatch([], [], 10, nowMs)).toEqual([]);
 	});
 
-	test("returns tried item even when recently tried (never null with tried items)", () => {
-		const records = new Map<string, ReviewRecord>([
-			[
-				"3x5:mul",
-				{
-					itemId: "3x5:mul",
-					lastTriedTime: nowMs - 1_000,
-					lastSuccessTime: nowMs - 1_000,
-					consecutiveSuccesses: 5,
-				},
-			],
-		]);
-
-		const result = selectNextItem(["3x5:mul"], records, nowMs);
-		expect(result).toBe("3x5:mul");
+	test("returns all families when fewer than batchSize", () => {
+		const result = selectBatch(["a", "b"], [], 10, nowMs);
+		expect(result).toHaveLength(2);
 	});
 
-	test("failed items score higher than well-known items", () => {
-		const records = new Map<string, ReviewRecord>([
-			[
-				"failed",
-				{
-					itemId: "failed",
-					lastTriedTime: nowMs - 15_000,
-					lastSuccessTime: 0,
-					consecutiveSuccesses: 0,
-				},
-			],
-			[
-				"known",
-				{
-					itemId: "known",
-					lastTriedTime: nowMs - 15_000,
-					lastSuccessTime: nowMs - 15_000,
-					consecutiveSuccesses: 3,
-				},
-			],
-		]);
-
-		const result = selectNextItem(["failed", "known"], records, nowMs);
-		expect(result).toBe("failed");
+	test("failed families score higher than well-known families", () => {
+		const attempts = [
+			attempt("failed", QuizFormat.MUL, false, nowMs - 15_000),
+			attempt("known", QuizFormat.MUL, true, nowMs - 15_000),
+			attempt("known", QuizFormat.MUL, true, nowMs - 14_000),
+			attempt("known", QuizFormat.MUL, true, nowMs - 13_000),
+		];
+		const result = selectBatch(["failed", "known"], attempts, 1, nowMs);
+		expect(result).toEqual(["failed"]);
 	});
 
-	test("new items take priority over tried items", () => {
-		const records = new Map<string, ReviewRecord>([
-			[
-				"tried",
-				{
-					itemId: "tried",
-					lastTriedTime: nowMs - 60_000,
-					lastSuccessTime: nowMs - 60_000,
-					consecutiveSuccesses: 1,
-				},
-			],
-		]);
-
-		const result = selectNextItem(["new-item", "tried"], records, nowMs);
-		expect(result).toBe("new-item");
+	test("new families take priority over tried families", () => {
+		const attempts = [attempt("tried", QuizFormat.MUL, true, nowMs - 60_000)];
+		const result = selectBatch(["new-family", "tried"], attempts, 1, nowMs);
+		expect(result).toEqual(["new-family"]);
 	});
 });

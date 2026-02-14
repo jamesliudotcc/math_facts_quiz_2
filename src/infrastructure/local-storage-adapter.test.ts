@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createNewReviewRecord } from "../domain/review-record";
+import type { Attempt } from "../domain/attempt";
+import { QuizFormat } from "../domain/quiz-format";
 import { DEFAULT_USER_CONFIG } from "../domain/user-config";
 import { LocalStorageAdapter } from "./local-storage-adapter";
 
@@ -28,13 +29,18 @@ afterEach(() => {
 });
 
 describe("LocalStorageAdapter", () => {
-	test("persists and loads review records across instances", () => {
+	test("persists and loads attempts across instances", () => {
 		const adapter1 = new LocalStorageAdapter();
-		const record = createNewReviewRecord("3x5:mul");
-		adapter1.saveReviewRecord(record);
+		const attempt: Attempt = {
+			familyId: "3x5",
+			format: QuizFormat.MUL,
+			timestamp: 1000,
+			correct: true,
+		};
+		adapter1.saveAttempt(attempt);
 
 		const adapter2 = new LocalStorageAdapter();
-		expect(adapter2.getReviewRecord("3x5:mul")).toEqual(record);
+		expect(adapter2.getAttempts("3x5")).toEqual([attempt]);
 	});
 
 	test("returns default config when none saved", () => {
@@ -55,10 +61,52 @@ describe("LocalStorageAdapter", () => {
 		expect(config.selectedTables).toEqual(new Set([2, 3]));
 	});
 
-	test("getAllReviewRecords returns all records", () => {
+	test("getAllAttempts returns all attempts", () => {
 		const adapter = new LocalStorageAdapter();
-		adapter.saveReviewRecord(createNewReviewRecord("a"));
-		adapter.saveReviewRecord(createNewReviewRecord("b"));
-		expect(adapter.getAllReviewRecords()).toHaveLength(2);
+		adapter.saveAttempt({
+			familyId: "a",
+			format: QuizFormat.MUL,
+			timestamp: 1000,
+			correct: true,
+		});
+		adapter.saveAttempt({
+			familyId: "b",
+			format: QuizFormat.DIV,
+			timestamp: 2000,
+			correct: false,
+		});
+		expect(adapter.getAllAttempts()).toHaveLength(2);
+	});
+
+	test("ignores legacy itemId-based attempts on load", () => {
+		const legacyAttempts = [
+			{ itemId: "3x5:mul", timestamp: 1000, correct: true },
+			{
+				familyId: "3x5",
+				format: QuizFormat.MUL,
+				timestamp: 2000,
+				correct: true,
+			},
+		];
+		localStorage.setItem("mathfacts:attempts", JSON.stringify(legacyAttempts));
+
+		const adapter = new LocalStorageAdapter();
+		const attempts = adapter.getAllAttempts();
+		expect(attempts).toHaveLength(1);
+		expect(attempts[0].familyId).toBe("3x5");
+	});
+
+	test("clearAllAttempts removes all attempts and persists", () => {
+		const adapter1 = new LocalStorageAdapter();
+		adapter1.saveAttempt({
+			familyId: "a",
+			format: QuizFormat.MUL,
+			timestamp: 1000,
+			correct: true,
+		});
+		adapter1.clearAllAttempts();
+
+		const adapter2 = new LocalStorageAdapter();
+		expect(adapter2.getAllAttempts()).toEqual([]);
 	});
 });

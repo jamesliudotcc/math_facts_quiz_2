@@ -1,4 +1,5 @@
 import type { StoragePort } from "../domain/ports";
+import { deriveFamilyStats } from "../domain/quiz-engine";
 
 export class StatsView {
 	private container: HTMLElement;
@@ -8,27 +9,39 @@ export class StatsView {
 	}
 
 	render(): void {
-		const records = this.storage.getAllReviewRecords();
+		const allAttempts = this.storage.getAllAttempts();
+
+		// Group attempts by familyId
+		const attemptsByFamily = new Map<string, typeof allAttempts>();
+		for (const a of allAttempts) {
+			const arr = attemptsByFamily.get(a.familyId);
+			if (arr) {
+				arr.push(a);
+			} else {
+				attemptsByFamily.set(a.familyId, [a]);
+			}
+		}
 
 		let struggling = 0;
 		let learning = 0;
 		let mature = 0;
 
-		for (const r of records) {
-			if (r.consecutiveSuccesses === 0) {
+		for (const [, attempts] of attemptsByFamily) {
+			const stats = deriveFamilyStats(attempts);
+			if (stats.effectiveSuccesses === 0) {
 				struggling++;
-			} else if (r.consecutiveSuccesses >= 5) {
+			} else if (stats.effectiveSuccesses >= 5) {
 				mature++;
 			} else {
 				learning++;
 			}
 		}
 
-		const totalReviewed = records.length;
+		const totalReviewed = attemptsByFamily.size;
 
 		this.container.innerHTML = `
 			<article>
-				<h3>Items Seen</h3>
+				<h3>Families Seen</h3>
 				<p style="font-size:2rem; text-align:center;">${totalReviewed}</p>
 			</article>
 			<div class="grid">

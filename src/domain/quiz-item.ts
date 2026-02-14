@@ -1,15 +1,10 @@
 import type { FactFamily } from "./fact-family";
-import { factFamilyId } from "./fact-family";
-import { ALL_QUIZ_FORMATS, QuizFormat } from "./quiz-format";
+import { QuizFormat } from "./quiz-format";
 
 export type QuizItem = {
 	readonly family: FactFamily;
 	readonly format: QuizFormat;
 };
-
-export function quizItemId(item: QuizItem): string {
-	return `${factFamilyId(item.family)}:${item.format}`;
-}
 
 export type RenderedQuizItem = {
 	readonly prompt: string;
@@ -58,8 +53,4 @@ export function renderQuizItem(item: QuizItem): RenderedQuizItem {
 			};
 		}
 	}
-}
-
-export function applicableFormats(_family: FactFamily): readonly QuizFormat[] {
-	return ALL_QUIZ_FORMATS;
 }

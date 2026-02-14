@@ -1,20 +1,27 @@
+import type { FactFamily } from "./fact-family";
+import { factFamilyId } from "./fact-family";
 import { generateFactFamilies } from "./fact-family-generator";
+import { selectFormatForMastery } from "./format-difficulty";
 import type { StoragePort } from "./ports";
-import { selectNextItem } from "./quiz-engine";
-import type { QuizItem, RenderedQuizItem } from "./quiz-item";
-import { applicableFormats, quizItemId, renderQuizItem } from "./quiz-item";
-import type { ReviewRecord } from "./review-record";
-import { createNewReviewRecord } from "./review-record";
+import { deriveFamilyStats, selectBatch } from "./quiz-engine";
+import type { QuizFormat } from "./quiz-format";
+import type { RenderedQuizItem } from "./quiz-item";
+import { renderQuizItem } from "./quiz-item";
 import { processReview } from "./review-service";
 
 export type QuizResult = {
 	readonly item: RenderedQuizItem;
-	readonly itemId: string;
+	readonly familyId: string;
+	readonly format: QuizFormat;
 };
 
+const BATCH_SIZE = 10;
+
 export class QuizSession {
-	private allItemIds: string[] = [];
-	private itemMap = new Map<string, QuizItem>();
+	private allFamilyIds: string[] = [];
+	private familyMap = new Map<string, FactFamily>();
+	private batch: string[] = [];
+	private batchIndex = 0;
 
 	constructor(private storage: StoragePort) {}
 
@@ -22,54 +29,58 @@ export class QuizSession {
 		const config = this.storage.getUserConfig();
 		const families = generateFactFamilies(config.selectedTables);
 
-		this.allItemIds = [];
-		this.itemMap.clear();
+		this.allFamilyIds = [];
+		this.familyMap.clear();
+		this.batch = [];
+		this.batchIndex = 0;
 
 		for (const family of families) {
-			const formats = applicableFormats(family);
-			for (const format of formats) {
-				if (config.enabledFormats.has(format)) {
-					const item: QuizItem = { family, format };
-					const id = quizItemId(item);
-					this.allItemIds.push(id);
-					this.itemMap.set(id, item);
-				}
-			}
+			const id = factFamilyId(family);
+			this.allFamilyIds.push(id);
+			this.familyMap.set(id, family);
 		}
+
+		this.refreshBatch();
 	}
 
 	getNextItem(): QuizResult | null {
-		const nowMs = Date.now();
+		if (this.allFamilyIds.length === 0) return null;
 
-		const records = new Map<string, ReviewRecord>();
-		for (const id of this.allItemIds) {
-			const record = this.storage.getReviewRecord(id);
-			if (record) {
-				records.set(id, record);
-			}
+		if (this.batchIndex >= this.batch.length) {
+			this.refreshBatch();
 		}
 
-		const nextId = selectNextItem(this.allItemIds, records, nowMs);
+		const familyId = this.batch[this.batchIndex];
+		this.batchIndex++;
 
-		if (nextId === null) return null;
+		const family = this.familyMap.get(familyId);
+		if (!family) return null;
 
-		const item = this.itemMap.get(nextId);
-		if (!item) return null;
+		const config = this.storage.getUserConfig();
+		const attempts = this.storage.getAttempts(familyId);
+		const stats = deriveFamilyStats(attempts);
+		const format = selectFormatForMastery(
+			stats.effectiveSuccesses,
+			config.enabledFormats,
+		);
+
 		return {
-			item: renderQuizItem(item),
-			itemId: nextId,
+			item: renderQuizItem({ family, format }),
+			familyId,
+			format,
 		};
 	}
 
-	submitAnswer(itemId: string, correct: boolean): void {
+	submitAnswer(familyId: string, format: QuizFormat, correct: boolean): void {
 		const nowMs = Date.now();
+		const attempt = processReview(familyId, format, correct, nowMs);
+		this.storage.saveAttempt(attempt);
+	}
 
-		let record = this.storage.getReviewRecord(itemId);
-		if (!record) {
-			record = createNewReviewRecord(itemId);
-		}
-
-		const updated = processReview(record, correct, nowMs);
-		this.storage.saveReviewRecord(updated);
+	private refreshBatch(): void {
+		const attempts = this.storage.getAllAttempts();
+		const nowMs = Date.now();
+		this.batch = selectBatch(this.allFamilyIds, attempts, BATCH_SIZE, nowMs);
+		this.batchIndex = 0;
 	}
 }

@@ -9,11 +9,11 @@ const session = new QuizSession(storage);
 session.initialize();
 
 const quizView = new QuizView(session);
+const statsView = new StatsView(storage);
 const configView = new ConfigView(storage, () => {
 	session.initialize();
-	quizView.showNextItem();
+	statsView.render();
 });
-const statsView = new StatsView(storage);
 
 // View switching
 const quizViewEl = document.getElementById("quiz-view") as HTMLElement;

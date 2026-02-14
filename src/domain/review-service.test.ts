@@ -1,53 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { createNewReviewRecord } from "./review-record";
+import { QuizFormat } from "./quiz-format";
 import { processReview } from "./review-service";
 
 describe("processReview", () => {
 	const nowMs = 1_000_000;
 
-	test("correct answer sets lastTriedTime and lastSuccessTime", () => {
-		const record = createNewReviewRecord("3x5:mul");
-		const updated = processReview(record, true, nowMs);
-		expect(updated.lastTriedTime).toBe(nowMs);
-		expect(updated.lastSuccessTime).toBe(nowMs);
-		expect(updated.consecutiveSuccesses).toBe(1);
+	test("correct answer creates attempt with correct=true", () => {
+		const attempt = processReview("3x5", QuizFormat.MUL, true, nowMs);
+		expect(attempt.familyId).toBe("3x5");
+		expect(attempt.format).toBe(QuizFormat.MUL);
+		expect(attempt.timestamp).toBe(nowMs);
+		expect(attempt.correct).toBe(true);
 	});
 
-	test("incorrect answer sets lastTriedTime but not lastSuccessTime", () => {
-		const record = createNewReviewRecord("3x5:mul");
-		const updated = processReview(record, false, nowMs);
-		expect(updated.lastTriedTime).toBe(nowMs);
-		expect(updated.lastSuccessTime).toBe(0);
-		expect(updated.consecutiveSuccesses).toBe(0);
+	test("incorrect answer creates attempt with correct=false", () => {
+		const attempt = processReview("3x5", QuizFormat.MUL, false, nowMs);
+		expect(attempt.familyId).toBe("3x5");
+		expect(attempt.timestamp).toBe(nowMs);
+		expect(attempt.correct).toBe(false);
 	});
 
-	test("incorrect answer resets consecutiveSuccesses", () => {
-		const record = {
-			itemId: "3x5:mul",
-			lastTriedTime: 500_000,
-			lastSuccessTime: 500_000,
-			consecutiveSuccesses: 5,
-		};
-		const updated = processReview(record, false, nowMs);
-		expect(updated.consecutiveSuccesses).toBe(0);
-		expect(updated.lastSuccessTime).toBe(500_000); // preserved
-	});
-
-	test("correct answer increments consecutiveSuccesses", () => {
-		const record = {
-			itemId: "3x5:mul",
-			lastTriedTime: 500_000,
-			lastSuccessTime: 500_000,
-			consecutiveSuccesses: 3,
-		};
-		const updated = processReview(record, true, nowMs);
-		expect(updated.consecutiveSuccesses).toBe(4);
-		expect(updated.lastSuccessTime).toBe(nowMs);
-	});
-
-	test("preserves item id", () => {
-		const record = createNewReviewRecord("2x7:div");
-		const updated = processReview(record, true, nowMs);
-		expect(updated.itemId).toBe("2x7:div");
+	test("preserves family id and format", () => {
+		const attempt = processReview("2x7", QuizFormat.DIV, true, nowMs);
+		expect(attempt.familyId).toBe("2x7");
+		expect(attempt.format).toBe(QuizFormat.DIV);
 	});
 });

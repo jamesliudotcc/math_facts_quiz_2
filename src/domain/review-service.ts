@@ -1,14 +1,11 @@
-import type { ReviewRecord } from "./review-record";
+import { type Attempt, createAttempt } from "./attempt";
+import type { QuizFormat } from "./quiz-format";
 
 export function processReview(
-	record: ReviewRecord,
+	familyId: string,
+	format: QuizFormat,
 	correct: boolean,
 	nowMs: number,
-): ReviewRecord {
-	return {
-		itemId: record.itemId,
-		lastTriedTime: nowMs,
-		lastSuccessTime: correct ? nowMs : record.lastSuccessTime,
-		consecutiveSuccesses: correct ? record.consecutiveSuccesses + 1 : 0,
-	};
+): Attempt {
+	return createAttempt(familyId, format, correct, nowMs);
 }

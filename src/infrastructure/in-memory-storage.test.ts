@@ -1,26 +1,44 @@
 import { describe, expect, test } from "bun:test";
-import { createNewReviewRecord } from "../domain/review-record";
+import { createAttempt } from "../domain/attempt";
+import { QuizFormat } from "../domain/quiz-format";
 import { DEFAULT_USER_CONFIG } from "../domain/user-config";
 import { InMemoryStorage } from "./in-memory-storage";
 
 describe("InMemoryStorage", () => {
-	test("stores and retrieves review records", () => {
+	test("saves and retrieves attempts for a family", () => {
 		const storage = new InMemoryStorage();
-		const record = createNewReviewRecord("3x5:mul");
-		storage.saveReviewRecord(record);
-		expect(storage.getReviewRecord("3x5:mul")).toEqual(record);
+		const attempt = createAttempt("3x5", QuizFormat.MUL, true, 1000);
+		storage.saveAttempt(attempt);
+		expect(storage.getAttempts("3x5")).toEqual([attempt]);
 	});
 
-	test("returns undefined for missing record", () => {
+	test("returns empty array for family with no attempts", () => {
 		const storage = new InMemoryStorage();
-		expect(storage.getReviewRecord("nope")).toBeUndefined();
+		expect(storage.getAttempts("nope")).toEqual([]);
 	});
 
-	test("getAllReviewRecords returns all saved records", () => {
+	test("getAllAttempts returns all saved attempts", () => {
 		const storage = new InMemoryStorage();
-		storage.saveReviewRecord(createNewReviewRecord("a"));
-		storage.saveReviewRecord(createNewReviewRecord("b"));
-		expect(storage.getAllReviewRecords()).toHaveLength(2);
+		storage.saveAttempt(createAttempt("a", QuizFormat.MUL, true, 1000));
+		storage.saveAttempt(createAttempt("b", QuizFormat.DIV, false, 2000));
+		expect(storage.getAllAttempts()).toHaveLength(2);
+	});
+
+	test("getAttempts filters by familyId", () => {
+		const storage = new InMemoryStorage();
+		storage.saveAttempt(createAttempt("a", QuizFormat.MUL, true, 1000));
+		storage.saveAttempt(createAttempt("b", QuizFormat.DIV, false, 2000));
+		storage.saveAttempt(createAttempt("a", QuizFormat.MUL_MISS, false, 3000));
+		expect(storage.getAttempts("a")).toHaveLength(2);
+		expect(storage.getAttempts("b")).toHaveLength(1);
+	});
+
+	test("clearAllAttempts removes all attempts", () => {
+		const storage = new InMemoryStorage();
+		storage.saveAttempt(createAttempt("a", QuizFormat.MUL, true, 1000));
+		storage.saveAttempt(createAttempt("b", QuizFormat.DIV, false, 2000));
+		storage.clearAllAttempts();
+		expect(storage.getAllAttempts()).toEqual([]);
 	});
 
 	test("stores and retrieves user config", () => {

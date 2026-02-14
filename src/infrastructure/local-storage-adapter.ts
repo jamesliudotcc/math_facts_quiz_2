@@ -1,34 +1,39 @@
+import type { Attempt } from "../domain/attempt";
 import type { StoragePort } from "../domain/ports";
 import { ALL_QUIZ_FORMATS, type QuizFormat } from "../domain/quiz-format";
-import type { ReviewRecord } from "../domain/review-record";
 import type { UserConfig } from "../domain/user-config";
 import { DEFAULT_USER_CONFIG } from "../domain/user-config";
 
 const KEYS = {
-	REVIEW_RECORDS: "mathfacts:reviewRecords",
+	ATTEMPTS: "mathfacts:attempts",
 	USER_CONFIG: "mathfacts:userConfig",
 } as const;
 
 export class LocalStorageAdapter implements StoragePort {
-	private records: Map<string, ReviewRecord>;
+	private attempts: Attempt[];
 	private config: UserConfig;
 
 	constructor() {
-		this.records = this.loadRecords();
+		this.attempts = this.loadAttempts();
 		this.config = this.loadConfig();
 	}
 
-	getReviewRecord(itemId: string): ReviewRecord | undefined {
-		return this.records.get(itemId);
+	getAttempts(familyId: string): Attempt[] {
+		return this.attempts.filter((a) => a.familyId === familyId);
 	}
 
-	saveReviewRecord(record: ReviewRecord): void {
-		this.records.set(record.itemId, record);
-		this.persistRecords();
+	getAllAttempts(): Attempt[] {
+		return [...this.attempts];
 	}
 
-	getAllReviewRecords(): ReviewRecord[] {
-		return [...this.records.values()];
+	saveAttempt(attempt: Attempt): void {
+		this.attempts.push(attempt);
+		this.persistAttempts();
+	}
+
+	clearAllAttempts(): void {
+		this.attempts = [];
+		this.persistAttempts();
 	}
 
 	getUserConfig(): UserConfig {
@@ -40,18 +45,18 @@ export class LocalStorageAdapter implements StoragePort {
 		this.persistConfig();
 	}
 
-	private loadRecords(): Map<string, ReviewRecord> {
-		const raw = localStorage.getItem(KEYS.REVIEW_RECORDS);
-		if (!raw) return new Map();
-		const arr: ReviewRecord[] = JSON.parse(raw);
-		return new Map(arr.map((r) => [r.itemId, r]));
+	private loadAttempts(): Attempt[] {
+		const raw = localStorage.getItem(KEYS.ATTEMPTS);
+		if (!raw) return [];
+
+		const parsed = JSON.parse(raw) as Record<string, unknown>[];
+		// Filter out legacy attempts that have itemId instead of familyId
+		// TODO: Remove this legacy filter once all users have migrated
+		return parsed.filter((a): a is Attempt => "familyId" in a && "format" in a);
 	}
 
-	private persistRecords(): void {
-		localStorage.setItem(
-			KEYS.REVIEW_RECORDS,
-			JSON.stringify([...this.records.values()]),
-		);
+	private persistAttempts(): void {
+		localStorage.setItem(KEYS.ATTEMPTS, JSON.stringify(this.attempts));
 	}
 
 	private loadConfig(): UserConfig {

@@ -1,22 +1,26 @@
+import type { Attempt } from "../domain/attempt";
 import type { StoragePort } from "../domain/ports";
-import type { ReviewRecord } from "../domain/review-record";
 import type { UserConfig } from "../domain/user-config";
 import { DEFAULT_USER_CONFIG } from "../domain/user-config";
 
 export class InMemoryStorage implements StoragePort {
-	private records = new Map<string, ReviewRecord>();
+	private attempts: Attempt[] = [];
 	private config: UserConfig = DEFAULT_USER_CONFIG;
 
-	getReviewRecord(itemId: string): ReviewRecord | undefined {
-		return this.records.get(itemId);
+	getAttempts(familyId: string): Attempt[] {
+		return this.attempts.filter((a) => a.familyId === familyId);
 	}
 
-	saveReviewRecord(record: ReviewRecord): void {
-		this.records.set(record.itemId, record);
+	getAllAttempts(): Attempt[] {
+		return [...this.attempts];
 	}
 
-	getAllReviewRecords(): ReviewRecord[] {
-		return [...this.records.values()];
+	saveAttempt(attempt: Attempt): void {
+		this.attempts.push(attempt);
+	}
+
+	clearAllAttempts(): void {
+		this.attempts = [];
 	}
 
 	getUserConfig(): UserConfig {

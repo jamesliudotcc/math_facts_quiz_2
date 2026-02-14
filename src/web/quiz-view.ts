@@ -41,7 +41,11 @@ export class QuizView {
 		if (Number.isNaN(userAnswer)) return;
 
 		const correct = userAnswer === this.currentItem.item.answer;
-		this.session.submitAnswer(this.currentItem.itemId, correct);
+		this.session.submitAnswer(
+			this.currentItem.familyId,
+			this.currentItem.format,
+			correct,
+		);
 
 		this.feedbackEl.hidden = false;
 		this.feedbackEl.className = `feedback ${correct ? "correct" : "incorrect"}`;

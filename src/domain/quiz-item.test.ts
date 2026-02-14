@@ -1,14 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createFactFamily } from "./fact-family";
 import { QuizFormat } from "./quiz-format";
-import { applicableFormats, quizItemId, renderQuizItem } from "./quiz-item";
-
-describe("quizItemId", () => {
-	test("returns deterministic id", () => {
-		const family = createFactFamily(3, 5);
-		expect(quizItemId({ family, format: QuizFormat.MUL })).toBe("3x5:mul");
-	});
-});
+import { renderQuizItem } from "./quiz-item";
 
 describe("renderQuizItem", () => {
 	const family = createFactFamily(3, 5);
@@ -81,17 +74,5 @@ describe("renderQuizItem", () => {
 		});
 		expect(rendered.prompt).toBe("4 × ? = 16");
 		expect(rendered.answer).toBe(4);
-	});
-});
-
-describe("applicableFormats", () => {
-	test("non-square family has 5 formats", () => {
-		const family = createFactFamily(3, 5);
-		expect(applicableFormats(family)).toHaveLength(5);
-	});
-
-	test("square family also has 5 formats", () => {
-		const family = createFactFamily(4, 4);
-		expect(applicableFormats(family)).toHaveLength(5);
 	});
 });
