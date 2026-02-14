@@ -120,16 +120,21 @@ test.describe("Math Facts Quiz", () => {
 		// Click reset
 		await page.locator("#reset-settings").click();
 
-		// All 9 table checkboxes should be checked (tables 2-10)
-		for (let i = 1; i < 10; i++) {
-			await expect(tableCheckboxes.nth(i)).toBeChecked();
+		// Default tables are 2-5 (indices 1-4 checked, others unchecked)
+		for (let i = 0; i < 10; i++) {
+			const expected = i >= 1 && i <= 4; // tables 2,3,4,5
+			if (expected) {
+				await expect(tableCheckboxes.nth(i)).toBeChecked();
+			} else {
+				await expect(tableCheckboxes.nth(i)).not.toBeChecked();
+			}
 		}
-		// Table 1 should not be checked (not in defaults)
-		await expect(tableCheckboxes.nth(0)).not.toBeChecked();
 
-		// All 5 format checkboxes should be checked
-		for (let i = 0; i < 5; i++) {
-			await expect(formatCheckboxes.nth(i)).toBeChecked();
-		}
+		// Default formats are mul and mul_miss (first 2 checked, rest unchecked)
+		await expect(formatCheckboxes.nth(0)).toBeChecked();
+		await expect(formatCheckboxes.nth(1)).toBeChecked();
+		await expect(formatCheckboxes.nth(2)).not.toBeChecked();
+		await expect(formatCheckboxes.nth(3)).not.toBeChecked();
+		await expect(formatCheckboxes.nth(4)).not.toBeChecked();
 	});
 });
