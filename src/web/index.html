@@ -10,8 +10,8 @@
 		.feedback { padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; text-align: center; font-size: 1.25rem; }
 		.feedback.correct { background: var(--pico-ins-color); color: white; }
 		.feedback.incorrect { background: var(--pico-del-color); color: white; }
-		.quiz-prompt { font-size: 2rem; text-align: center; margin: 2rem 0; }
-		.quiz-input { max-width: 200px; margin: 0 auto; text-align: center; font-size: 1.5rem; }
+		.quiz-prompt { font-size: 2rem; text-align: center; margin: 2rem 0; display: flex; align-items: center; justify-content: center; gap: 0.25rem; }
+		.quiz-inline-input { width: 3ch; text-align: center; font-size: 2rem; margin: 0; padding: 0.1em 0.2em; display: inline-block; }
 		.table-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
 		.done-message { text-align: center; padding: 2rem; }
 		section[hidden] { display: none; }
@@ -32,10 +32,7 @@
 	</header>
 	<main class="container">
 		<section id="quiz-view">
-			<div id="quiz-prompt" class="quiz-prompt"></div>
-			<div class="quiz-input">
-				<input type="number" id="quiz-answer" inputmode="numeric" placeholder="?" autofocus>
-			</div>
+			<div id="quiz-prompt" class="quiz-prompt"><span id="quiz-before"></span><input type="number" id="quiz-answer" class="quiz-inline-input" inputmode="numeric" autofocus><span id="quiz-after"></span></div>
 			<div style="text-align:center; margin-top:1rem;">
 				<button id="quiz-submit">Submit</button>
 			</div>

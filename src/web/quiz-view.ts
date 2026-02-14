@@ -2,6 +2,8 @@ import type { QuizResult, QuizSession } from "../domain/quiz-session";
 
 export class QuizView {
 	private promptEl: HTMLElement;
+	private beforeEl: HTMLElement;
+	private afterEl: HTMLElement;
 	private answerEl: HTMLInputElement;
 	private submitEl: HTMLButtonElement;
 	private feedbackEl: HTMLElement;
@@ -10,6 +12,8 @@ export class QuizView {
 
 	constructor(private session: QuizSession) {
 		this.promptEl = document.getElementById("quiz-prompt") as HTMLElement;
+		this.beforeEl = document.getElementById("quiz-before") as HTMLElement;
+		this.afterEl = document.getElementById("quiz-after") as HTMLElement;
 		this.answerEl = document.getElementById("quiz-answer") as HTMLInputElement;
 		this.submitEl = document.getElementById("quiz-submit") as HTMLButtonElement;
 		this.feedbackEl = document.getElementById("quiz-feedback") as HTMLElement;
@@ -26,17 +30,19 @@ export class QuizView {
 		this.currentItem = this.session.getNextItem();
 
 		if (!this.currentItem) {
-			this.promptEl.textContent = "";
-			this.answerEl.hidden = true;
+			this.promptEl.hidden = true;
 			this.submitEl.hidden = true;
 			this.doneEl.hidden = false;
 			return;
 		}
 
-		this.answerEl.hidden = false;
+		this.promptEl.hidden = false;
 		this.submitEl.hidden = false;
 		this.doneEl.hidden = true;
-		this.promptEl.textContent = this.currentItem.item.prompt;
+
+		const [before, after] = this.currentItem.item.prompt.split("?");
+		this.beforeEl.textContent = before;
+		this.afterEl.textContent = after;
 		this.answerEl.value = "";
 		this.answerEl.focus();
 	}
