@@ -17,28 +17,36 @@ The app uses the **SM-2 spaced repetition algorithm** to schedule reviews, prior
 ## Prerequisites
 
 - [Bun](https://bun.sh) (v1.0+)
+- [GNU Make](https://www.gnu.org/software/make/)
 
 ## Setup
 
 ```sh
-bun install
+make install
 ```
 
-## Scripts
+## Make Targets
 
-| Command | Description |
-|---------|-------------|
-| `bun test` | Run all tests |
-| `bun run lint` | Lint and format check (Biome) |
-| `bun run format` | Auto-fix lint and format issues |
-| `bun run build:web` | Bundle the web app |
-| `bun run serve:web` | Build and serve the web app at `http://localhost:3000` |
-| `bun run typecheck` | Type-check with TypeScript |
+| Target | Description |
+|--------|-------------|
+| `make install` | Install dependencies |
+| `make lint` | Lint and format check (Biome) |
+| `make format` | Auto-fix lint and format issues |
+| `make typecheck` | Type-check with TypeScript Go |
+| `make build.web` | Bundle the web app |
+| `make build.web.dist` | Bundle to `dist/` for deployment |
+| `make serve.web` | Build and serve the web app at `http://localhost:3000` |
+| `make test` | Run all tests (unit + e2e) |
+| `make test.unit` | Run unit tests only |
+| `make test.e2e` | Run Playwright e2e tests only |
+| `make test.e2e.ui` | Run Playwright tests with interactive UI |
+
+> The underlying `bun run` scripts in `package.json` still work (e.g. `bun test`, `bun run lint`).
 
 ## Web App
 
 ```sh
-bun run serve:web
+make serve.web
 ```
 
 Open http://localhost:3000 in your browser. The app has three views:
@@ -77,8 +85,8 @@ src/
 
 ## Testing
 
-All domain and infrastructure logic is tested with Bun's test runner:
+All domain and infrastructure logic is tested with Bun's test runner. End-to-end browser tests use Playwright.
 
 ```sh
-bun test
+make test
 ```
