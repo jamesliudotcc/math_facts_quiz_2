@@ -9,9 +9,7 @@ test.describe("Math Facts Quiz", () => {
 	test("navigation links are visible", async ({ page }) => {
 		await page.goto("/");
 		await expect(page.getByRole("link", { name: "Quiz" })).toBeVisible();
-		await expect(
-			page.getByRole("link", { name: "Settings" }),
-		).toBeVisible();
+		await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Stats" })).toBeVisible();
 	});
 
@@ -21,9 +19,7 @@ test.describe("Math Facts Quiz", () => {
 		await page.goto("/");
 		await expect(page.locator("#quiz-prompt")).toBeVisible();
 		await expect(page.locator("#quiz-answer")).toBeVisible();
-		await expect(
-			page.getByRole("button", { name: "Submit" }),
-		).toBeVisible();
+		await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
 	});
 
 	test("can type answer and submit to get feedback", async ({ page }) => {

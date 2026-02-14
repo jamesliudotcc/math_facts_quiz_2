@@ -1,0 +1,8 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: chingon
+        name: chingon
+        entry: make chingon
+        language: system
+        pass_filenames: false
