@@ -13,7 +13,6 @@
 		.quiz-prompt { font-size: 2rem; margin: 2rem 0; display: flex; align-items: baseline; justify-content: center; gap: 0.25rem; }
 		.quiz-inline-input { flex: 0 0 4ch; text-align: center; font-size: 2rem; margin: 0; padding: 0.1em 0.2em; border: 2px solid var(--pico-primary); border-radius: 0.25rem; }
 		.table-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
-		.done-message { text-align: center; padding: 2rem; }
 		section[hidden] { display: none; }
 		summary h2 { display: inline; }
 	</style>
@@ -38,11 +37,7 @@
 				<button id="quiz-submit">Submit</button>
 			</div>
 			<div id="quiz-feedback" class="feedback" hidden></div>
-			<div id="quiz-done" class="done-message" hidden>
-				<h2>All done for today!</h2>
-				<p>Come back tomorrow for more practice.</p>
-			</div>
-		</section>
+			</section>
 
 		<section id="alt-views" hidden>
 			<details id="config-details" open>
@@ -55,11 +50,7 @@
 					<h3>Question Formats</h3>
 					<div id="format-checkboxes"></div>
 				</article>
-				<article>
-					<h3>New Items Per Session</h3>
-					<input type="number" id="new-items-input" min="1" max="50" value="10">
-				</article>
-			</details>
+				</details>
 			<details id="stats-details">
 				<summary><h2>Statistics</h2></summary>
 				<div id="stats-content"></div>

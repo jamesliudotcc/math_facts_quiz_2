@@ -40,9 +40,6 @@ describe("LocalStorageAdapter", () => {
 	test("returns default config when none saved", () => {
 		const adapter = new LocalStorageAdapter();
 		const config = adapter.getUserConfig();
-		expect(config.newItemsPerSession).toBe(
-			DEFAULT_USER_CONFIG.newItemsPerSession,
-		);
 		expect(config.selectedTables).toEqual(DEFAULT_USER_CONFIG.selectedTables);
 	});
 
@@ -51,22 +48,11 @@ describe("LocalStorageAdapter", () => {
 		adapter1.saveUserConfig({
 			...DEFAULT_USER_CONFIG,
 			selectedTables: new Set([2, 3]),
-			newItemsPerSession: 5,
 		});
 
 		const adapter2 = new LocalStorageAdapter();
 		const config = adapter2.getUserConfig();
 		expect(config.selectedTables).toEqual(new Set([2, 3]));
-		expect(config.newItemsPerSession).toBe(5);
-	});
-
-	test("persists new item counts", () => {
-		const adapter1 = new LocalStorageAdapter();
-		adapter1.incrementNewItemsIntroducedToday("2025-06-15");
-		adapter1.incrementNewItemsIntroducedToday("2025-06-15");
-
-		const adapter2 = new LocalStorageAdapter();
-		expect(adapter2.getNewItemsIntroducedToday("2025-06-15")).toBe(2);
 	});
 
 	test("getAllReviewRecords returns all records", () => {

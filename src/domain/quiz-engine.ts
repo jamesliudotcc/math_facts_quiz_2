@@ -1,5 +1,4 @@
 import type { ReviewRecord } from "./review-record";
-import type { UserConfig } from "./user-config";
 
 const BASE_INTERVAL_MS = 30_000; // 30 seconds
 const MULTIPLIER = 3;
@@ -20,8 +19,6 @@ export function selectNextItem(
 	allItemIds: readonly string[],
 	records: ReadonlyMap<string, ReviewRecord>,
 	nowMs: number,
-	newItemsIntroducedToday: number,
-	config: UserConfig,
 ): string | null {
 	if (allItemIds.length === 0) return null;
 
@@ -32,11 +29,7 @@ export function selectNextItem(
 		const record = records.get(id);
 
 		if (!record || record.lastTriedTime === 0) {
-			// Never-tried item
-			if (newItemsIntroducedToday < config.newItemsPerSession) {
-				return id; // Immediately return first new item
-			}
-			continue; // Skip new items once cap is hit
+			return id; // Never-tried items have infinite score, return immediately
 		}
 
 		const score = itemScore(record, nowMs);

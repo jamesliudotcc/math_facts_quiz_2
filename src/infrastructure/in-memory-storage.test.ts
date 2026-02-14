@@ -26,17 +26,11 @@ describe("InMemoryStorage", () => {
 	test("stores and retrieves user config", () => {
 		const storage = new InMemoryStorage();
 		expect(storage.getUserConfig()).toEqual(DEFAULT_USER_CONFIG);
-		const newConfig = { ...DEFAULT_USER_CONFIG, newItemsPerSession: 5 };
+		const newConfig = {
+			...DEFAULT_USER_CONFIG,
+			selectedTables: new Set([2, 3]),
+		};
 		storage.saveUserConfig(newConfig);
-		expect(storage.getUserConfig().newItemsPerSession).toBe(5);
-	});
-
-	test("tracks new items introduced today", () => {
-		const storage = new InMemoryStorage();
-		expect(storage.getNewItemsIntroducedToday("2025-06-15")).toBe(0);
-		storage.incrementNewItemsIntroducedToday("2025-06-15");
-		storage.incrementNewItemsIntroducedToday("2025-06-15");
-		expect(storage.getNewItemsIntroducedToday("2025-06-15")).toBe(2);
-		expect(storage.getNewItemsIntroducedToday("2025-06-16")).toBe(0);
+		expect(storage.getUserConfig().selectedTables).toEqual(new Set([2, 3]));
 	});
 });

@@ -13,7 +13,6 @@ const FORMAT_LABELS: Record<string, string> = {
 export class ConfigView {
 	private tableContainer: HTMLElement;
 	private formatContainer: HTMLElement;
-	private newItemsInput: HTMLInputElement;
 
 	constructor(
 		private storage: StoragePort,
@@ -25,12 +24,8 @@ export class ConfigView {
 		this.formatContainer = document.getElementById(
 			"format-checkboxes",
 		) as HTMLElement;
-		this.newItemsInput = document.getElementById(
-			"new-items-input",
-		) as HTMLInputElement;
 
 		this.render();
-		this.newItemsInput.addEventListener("change", () => this.saveConfig());
 	}
 
 	render(): void {
@@ -62,8 +57,6 @@ export class ConfigView {
 			label.appendChild(document.createTextNode(` ${FORMAT_LABELS[fmt]}`));
 			this.formatContainer.appendChild(label);
 		}
-
-		this.newItemsInput.value = String(config.newItemsPerSession);
 	}
 
 	private saveConfig(): void {
@@ -83,13 +76,9 @@ export class ConfigView {
 			}
 		}
 
-		const newItemsPerSession =
-			Number.parseInt(this.newItemsInput.value, 10) || 10;
-
 		this.storage.saveUserConfig({
 			selectedTables,
 			enabledFormats,
-			newItemsPerSession,
 		});
 		this.onConfigChange();
 	}

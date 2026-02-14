@@ -8,7 +8,4 @@ export interface StoragePort {
 
 	getUserConfig(): UserConfig;
 	saveUserConfig(config: UserConfig): void;
-
-	getNewItemsIntroducedToday(dateKey: string): number;
-	incrementNewItemsIntroducedToday(dateKey: string): void;
 }

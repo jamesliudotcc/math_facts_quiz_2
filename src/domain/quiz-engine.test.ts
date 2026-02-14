@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { desiredInterval, itemScore, selectNextItem } from "./quiz-engine";
 import type { ReviewRecord } from "./review-record";
-import { DEFAULT_USER_CONFIG } from "./user-config";
 
 describe("desiredInterval", () => {
 	test("failed items have short interval", () => {
@@ -55,18 +54,11 @@ describe("itemScore", () => {
 });
 
 describe("selectNextItem", () => {
-	const config = DEFAULT_USER_CONFIG;
 	const nowMs = 1_000_000;
 
 	test("returns new item when none have been tried", () => {
 		const records = new Map<string, ReviewRecord>();
-		const result = selectNextItem(
-			["3x5:a*b", "3x5:b*a"],
-			records,
-			nowMs,
-			0,
-			config,
-		);
+		const result = selectNextItem(["3x5:a*b", "3x5:b*a"], records, nowMs);
 		expect(result).toBe("3x5:a*b");
 	});
 
@@ -76,57 +68,28 @@ describe("selectNextItem", () => {
 				"3x5:a*b",
 				{
 					itemId: "3x5:a*b",
-					lastTriedTime: nowMs - 20_000, // 20s ago
+					lastTriedTime: nowMs - 20_000,
 					lastSuccessTime: nowMs - 20_000,
-					consecutiveSuccesses: 1, // desired 30s, score ~0.67
+					consecutiveSuccesses: 1,
 				},
 			],
 			[
 				"3x5:b*a",
 				{
 					itemId: "3x5:b*a",
-					lastTriedTime: nowMs - 60_000, // 60s ago
+					lastTriedTime: nowMs - 60_000,
 					lastSuccessTime: nowMs - 60_000,
-					consecutiveSuccesses: 1, // desired 30s, score = 2
-				},
-			],
-		]);
-
-		const result = selectNextItem(
-			["3x5:a*b", "3x5:b*a"],
-			records,
-			nowMs,
-			config.newItemsPerSession, // at cap so new items skipped
-			config,
-		);
-		expect(result).toBe("3x5:b*a");
-	});
-
-	test("skips new items when cap is reached", () => {
-		const records = new Map<string, ReviewRecord>([
-			[
-				"3x5:a*b",
-				{
-					itemId: "3x5:a*b",
-					lastTriedTime: nowMs - 5_000,
-					lastSuccessTime: nowMs - 5_000,
 					consecutiveSuccesses: 1,
 				},
 			],
 		]);
 
-		const result = selectNextItem(
-			["3x5:a*b", "new-item"],
-			records,
-			nowMs,
-			config.newItemsPerSession, // at cap
-			config,
-		);
-		expect(result).toBe("3x5:a*b"); // returns tried item, not new
+		const result = selectNextItem(["3x5:a*b", "3x5:b*a"], records, nowMs);
+		expect(result).toBe("3x5:b*a");
 	});
 
 	test("returns null for empty item list", () => {
-		const result = selectNextItem([], new Map(), nowMs, 0, config);
+		const result = selectNextItem([], new Map(), nowMs);
 		expect(result).toBe(null);
 	});
 
@@ -136,20 +99,14 @@ describe("selectNextItem", () => {
 				"3x5:a*b",
 				{
 					itemId: "3x5:a*b",
-					lastTriedTime: nowMs - 1_000, // just 1s ago
+					lastTriedTime: nowMs - 1_000,
 					lastSuccessTime: nowMs - 1_000,
-					consecutiveSuccesses: 5, // long desired interval
+					consecutiveSuccesses: 5,
 				},
 			],
 		]);
 
-		const result = selectNextItem(
-			["3x5:a*b"],
-			records,
-			nowMs,
-			config.newItemsPerSession,
-			config,
-		);
+		const result = selectNextItem(["3x5:a*b"], records, nowMs);
 		expect(result).toBe("3x5:a*b");
 	});
 
@@ -159,29 +116,40 @@ describe("selectNextItem", () => {
 				"failed",
 				{
 					itemId: "failed",
-					lastTriedTime: nowMs - 15_000, // 15s ago
+					lastTriedTime: nowMs - 15_000,
 					lastSuccessTime: 0,
-					consecutiveSuccesses: 0, // desired 10s, score = 1.5
+					consecutiveSuccesses: 0,
 				},
 			],
 			[
 				"known",
 				{
 					itemId: "known",
-					lastTriedTime: nowMs - 15_000, // 15s ago
+					lastTriedTime: nowMs - 15_000,
 					lastSuccessTime: nowMs - 15_000,
-					consecutiveSuccesses: 3, // desired 270s, score ~0.056
+					consecutiveSuccesses: 3,
 				},
 			],
 		]);
 
-		const result = selectNextItem(
-			["failed", "known"],
-			records,
-			nowMs,
-			config.newItemsPerSession,
-			config,
-		);
+		const result = selectNextItem(["failed", "known"], records, nowMs);
 		expect(result).toBe("failed");
+	});
+
+	test("new items take priority over tried items", () => {
+		const records = new Map<string, ReviewRecord>([
+			[
+				"tried",
+				{
+					itemId: "tried",
+					lastTriedTime: nowMs - 60_000,
+					lastSuccessTime: nowMs - 60_000,
+					consecutiveSuccesses: 1,
+				},
+			],
+		]);
+
+		const result = selectNextItem(["new-item", "tried"], records, nowMs);
+		expect(result).toBe("new-item");
 	});
 });

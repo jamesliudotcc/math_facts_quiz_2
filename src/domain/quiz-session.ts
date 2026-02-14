@@ -39,10 +39,7 @@ export class QuizSession {
 	}
 
 	getNextItem(): QuizResult | null {
-		const config = this.storage.getUserConfig();
 		const nowMs = Date.now();
-		const dateKey = new Date(nowMs).toISOString().slice(0, 10);
-		const newToday = this.storage.getNewItemsIntroducedToday(dateKey);
 
 		const records = new Map<string, ReviewRecord>();
 		for (const id of this.allItemIds) {
@@ -52,13 +49,7 @@ export class QuizSession {
 			}
 		}
 
-		const nextId = selectNextItem(
-			this.allItemIds,
-			records,
-			nowMs,
-			newToday,
-			config,
-		);
+		const nextId = selectNextItem(this.allItemIds, records, nowMs);
 
 		if (nextId === null) return null;
 
@@ -72,20 +63,13 @@ export class QuizSession {
 
 	submitAnswer(itemId: string, correct: boolean): void {
 		const nowMs = Date.now();
-		const dateKey = new Date(nowMs).toISOString().slice(0, 10);
 
 		let record = this.storage.getReviewRecord(itemId);
-		const isNew = !record;
-
 		if (!record) {
 			record = createNewReviewRecord(itemId);
 		}
 
 		const updated = processReview(record, correct, nowMs);
 		this.storage.saveReviewRecord(updated);
-
-		if (isNew) {
-			this.storage.incrementNewItemsIntroducedToday(dateKey);
-		}
 	}
 }
