@@ -21,16 +21,28 @@ const FORMAT_TIERS: { minSuccesses: number; formats: QuizFormat[] }[] = [
 export function selectFormatForMastery(
 	effectiveSuccesses: number,
 	enabledFormats: ReadonlySet<QuizFormat>,
+	random: () => number = Math.random,
 ): QuizFormat {
-	// Find the highest tier the student qualifies for
+	const weighted: { format: QuizFormat; weight: number }[] = [];
+
 	for (const tier of FORMAT_TIERS) {
-		if (effectiveSuccesses >= tier.minSuccesses) {
-			const eligible = tier.formats.filter((f) => enabledFormats.has(f));
-			if (eligible.length > 0) {
-				return eligible[Math.floor(Math.random() * eligible.length)];
-			}
+		for (const format of tier.formats) {
+			if (!enabledFormats.has(format)) continue;
+			const weight =
+				effectiveSuccesses >= tier.minSuccesses
+					? 1 + (effectiveSuccesses - tier.minSuccesses)
+					: 0.1;
+			weighted.push({ format, weight });
 		}
 	}
-	// Fallback: pick any enabled format
-	return [...enabledFormats][0];
+
+	if (weighted.length === 0) return [...enabledFormats][0];
+
+	const total = weighted.reduce((sum, w) => sum + w.weight, 0);
+	let roll = random() * total;
+	for (const w of weighted) {
+		roll -= w.weight;
+		if (roll <= 0) return w.format;
+	}
+	return weighted[weighted.length - 1].format;
 }

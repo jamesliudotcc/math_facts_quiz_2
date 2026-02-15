@@ -49,6 +49,7 @@ export function selectBatch(
 	attempts: readonly Attempt[],
 	batchSize: number,
 	nowMs: number,
+	random: () => number = Math.random,
 ): string[] {
 	if (allFamilyIds.length === 0) return [];
 
@@ -66,6 +67,12 @@ export function selectBatch(
 		id,
 		score: familyScore(attemptsByFamily.get(id) ?? [], nowMs),
 	}));
+
+	// Shuffle before sorting so tied scores get random order
+	for (let i = scored.length - 1; i > 0; i--) {
+		const j = Math.floor(random() * (i + 1));
+		[scored[i], scored[j]] = [scored[j], scored[i]];
+	}
 
 	scored.sort((a, b) => b.score - a.score);
 

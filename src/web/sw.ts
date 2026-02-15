@@ -2,7 +2,7 @@
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-const CACHE_NAME = "math-facts-v2";
+const CACHE_NAME = "math-facts-v4";
 const APP_SHELL = [
 	"/",
 	"/app.js",

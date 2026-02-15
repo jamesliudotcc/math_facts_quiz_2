@@ -102,8 +102,10 @@ describe("selectBatch", () => {
 	test("returns new families when none have been tried", () => {
 		const result = selectBatch(["a", "b", "c"], [], 2, nowMs);
 		expect(result).toHaveLength(2);
-		expect(result).toContain("a");
-		expect(result).toContain("b");
+		// All unseen families are tied, so any 2 of 3 is valid
+		for (const id of result) {
+			expect(["a", "b", "c"]).toContain(id);
+		}
 	});
 
 	test("returns most overdue families first", () => {
