@@ -19,6 +19,11 @@ export function StatsPanel({ storage }: Props) {
 			? allAttempts.filter((a) => a.timestamp > cutoff)
 			: allAttempts;
 
+	const totalAttempts = attempts.length;
+	const correctAttempts = attempts.filter((a) => a.correct).length;
+	const pctCorrect =
+		totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
+
 	return (
 		<View>
 			<View style={styles.toggle}>
@@ -49,6 +54,10 @@ export function StatsPanel({ storage }: Props) {
 					</Text>
 				</Pressable>
 			</View>
+			<Text style={styles.summary}>
+				<Text style={styles.bold}>{totalAttempts}</Text> attempted,{" "}
+				<Text style={styles.bold}>{pctCorrect}%</Text> correct
+			</Text>
 			<MasteryGrid attempts={attempts} />
 		</View>
 	);
@@ -77,5 +86,12 @@ const styles = StyleSheet.create({
 	},
 	btnTextActive: {
 		color: "#fff",
+	},
+	summary: {
+		fontSize: 15,
+		marginBottom: 12,
+	},
+	bold: {
+		fontWeight: "bold",
 	},
 });

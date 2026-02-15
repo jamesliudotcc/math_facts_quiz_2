@@ -42,11 +42,19 @@ export class StatsView {
 		const allClass = this.timeFilter === "all" ? "" : ' class="outline"';
 		const dayClass = this.timeFilter === "24h" ? "" : ' class="outline"';
 
+		const totalAttempts = attempts.length;
+		const correctAttempts = attempts.filter((a) => a.correct).length;
+		const pctCorrect =
+			totalAttempts > 0
+				? Math.round((correctAttempts / totalAttempts) * 100)
+				: 0;
+
 		let html = `
 			<div class="time-toggle">
 				<button data-filter="all"${allClass}>All Time</button>
 				<button data-filter="24h"${dayClass}>Last 24h</button>
 			</div>
+			<p><strong>${totalAttempts}</strong> attempted, <strong>${pctCorrect}%</strong> correct</p>
 			<table class="mastery-grid"><tbody>`;
 
 		// Rows — only cells where c ≤ r (lower triangle)
