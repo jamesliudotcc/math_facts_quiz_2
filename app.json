@@ -1,7 +1,7 @@
 {
 	"expo": {
 		"name": "Math Facts Quiz",
-		"slug": "math-facts-quiz",
+		"slug": "math-facts",
 		"version": "1.0.0",
 		"orientation": "portrait",
 		"icon": "./assets/icon.png",
@@ -25,6 +25,12 @@
 		},
 		"web": {
 			"favicon": "./assets/favicon.png"
-		}
+		},
+		"extra": {
+			"eas": {
+				"projectId": "5eb1efdd-a057-4744-be4d-ed80f1a8b5d9"
+			}
+		},
+		"owner": "jamesliudotai"
 	}
 }
