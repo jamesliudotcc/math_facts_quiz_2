@@ -35,6 +35,7 @@
 		"@types/canvas-confetti": "^1.9.0",
 		"@types/react": "~19.1.0",
 		"@typescript/native-preview": "^7.0.0-dev.20260213.1",
+		"sharp": "^0.34.5",
 		"typescript": "~5.9.2"
 	},
 	"private": true
