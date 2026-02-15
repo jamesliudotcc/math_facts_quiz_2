@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	StyleSheet,
+	Text,
+	TextInput,
+	View,
+} from "react-native";
 import type { QuizResult, QuizSession } from "../domain/quiz-session";
 
 type Props = {
@@ -70,7 +78,10 @@ export function QuizScreen({ session }: Props) {
 	const [before, after] = currentItem.item.prompt.split("?");
 
 	return (
-		<View style={styles.container}>
+		<KeyboardAvoidingView
+			style={styles.container}
+			behavior={Platform.OS === "ios" ? "padding" : "height"}
+		>
 			{streak > 0 && <Text style={styles.streak}>Streak: {streak}</Text>}
 			<View style={styles.promptRow}>
 				<Text style={styles.prompt}>{before}</Text>
@@ -104,7 +115,7 @@ export function QuizScreen({ session }: Props) {
 					<Text style={styles.feedbackText}>{feedback.message}</Text>
 				</View>
 			)}
-		</View>
+		</KeyboardAvoidingView>
 	);
 }
 
